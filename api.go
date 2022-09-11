@@ -23,7 +23,8 @@ func AddResourceToGinRouter(name string, r *gin.RouterGroup, getDb func() *gorm.
 			return
 		}
 
-		list := reflect.SliceOf(reflect.TypeOf(getModel()).Elem())
+		// 相当于： &[]User
+		list := reflect.New(reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf(getModel()).Elem()), 0, 0).Type()).Interface()
 		err = getDb().Model(getModel()).Find(list).Error
 		if err != nil {
 			c.JSON(200, gin.H{
@@ -83,7 +84,8 @@ func AddResourceToGinRouter(name string, r *gin.RouterGroup, getDb func() *gorm.
 	// 删除
 	r.DELETE("/"+name+"/:id", func(c *gin.Context) {
 		// 查找
-		err := getDb().Model(getModel()).Find("id=?", c.Param("id")).Error
+		model := getModel()
+		err := getDb().Model(model).Find(model, "id=?", c.Param("id")).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
@@ -92,7 +94,7 @@ func AddResourceToGinRouter(name string, r *gin.RouterGroup, getDb func() *gorm.
 			return
 		}
 
-		err = getDb().Model(getModel()).Delete("id=?", c.Param("id")).Error
+		err = getDb().Model(model).Delete("id=?", c.Param("id")).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
