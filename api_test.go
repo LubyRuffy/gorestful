@@ -3,16 +3,18 @@ package gorestful
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 func getJson(url string) (map[string]interface{}, error) {
@@ -64,10 +66,6 @@ type User struct {
 	Email string `json:"email"`
 }
 
-func (u User) GetID() uint {
-	return u.ID
-}
-
 func TestAddResourceToGinRouter(t *testing.T) {
 	cfg := &gorm.Config{}
 	dbfile := filepath.Join(os.TempDir(), time.Now().Format("20060102150405.sqlite"))
@@ -85,7 +83,7 @@ func TestAddResourceToGinRouter(t *testing.T) {
 	v1 := g.Group(prefix)
 	AddResourceToGinRouter("user", v1, func() *gorm.DB {
 		return gdb
-	}, func() Model {
+	}, func() interface{} {
 		return &User{}
 	})
 
@@ -112,7 +110,7 @@ func TestAddResourceToGinRouter(t *testing.T) {
 	assert.Equal(t, float64(1), r["data"].(map[string]interface{})["count"])
 
 	// 删除
-	r, err = deleteJson(s.URL + prefix + "/user/")
+	r, err = deleteJson(s.URL + prefix + fmt.Sprintf("/user/%v", r["data"].(map[string]interface{})["list"].([]map[string]interface{})[0]["ID"]))
 	assert.Nil(t, err)
 	assert.NotNil(t, r)
 	// 读列表
