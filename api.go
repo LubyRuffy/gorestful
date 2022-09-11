@@ -108,4 +108,23 @@ func AddResourceToGinRouter(name string, r *gin.RouterGroup, getDb func() *gorm.
 			"data": true,
 		})
 	})
+
+	// 查看
+	r.GET("/"+name+"/:id", func(c *gin.Context) {
+		// 查找
+		model := getModel()
+		err := getDb().Model(model).Find(model, "id=?", c.Param("id")).Error
+		if err != nil {
+			c.JSON(200, gin.H{
+				"code":    500,
+				"message": "not found:" + err.Error(),
+			})
+			return
+		}
+
+		c.JSON(200, gin.H{
+			"code": 200,
+			"data": model,
+		})
+	})
 }

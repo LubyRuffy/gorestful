@@ -108,9 +108,17 @@ func TestAddResourceToGinRouter(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, r)
 	assert.Equal(t, float64(1), r["data"].(map[string]interface{})["count"])
+	assert.Equal(t, "a@a.com", r["data"].(map[string]interface{})["list"].([]interface{})[0].(map[string]interface{})["email"])
+	id := r["data"].(map[string]interface{})["list"].([]interface{})[0].(map[string]interface{})["ID"]
+
+	// 查看
+	r, err = getJson(s.URL + prefix + fmt.Sprintf("/user/%v", id))
+	assert.Nil(t, err)
+	assert.NotNil(t, r)
+	assert.Equal(t, "a@a.com", r["data"].(map[string]interface{})["email"])
 
 	// 删除
-	r, err = deleteJson(s.URL + prefix + fmt.Sprintf("/user/%v", r["data"].(map[string]interface{})["list"].([]interface{})[0].(map[string]interface{})["ID"]))
+	r, err = deleteJson(s.URL + prefix + fmt.Sprintf("/user/%v", id))
 	assert.Nil(t, err)
 	assert.NotNil(t, r)
 	// 读列表
