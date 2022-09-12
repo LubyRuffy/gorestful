@@ -66,7 +66,7 @@ type User struct {
 	Email string `json:"email"`
 }
 
-func TestAddResourceToGinRouter(t *testing.T) {
+func TestAddResourceToGin(t *testing.T) {
 	cfg := &gorm.Config{}
 	dbfile := filepath.Join(os.TempDir(), time.Now().Format("20060102150405.sqlite"))
 	defer os.Remove(dbfile)
@@ -81,11 +81,12 @@ func TestAddResourceToGinRouter(t *testing.T) {
 	g := gin.Default()
 	prefix := "/api/v1"
 	v1 := g.Group(prefix)
-	AddResourceToGinRouter("user", v1, func() *gorm.DB {
-		return gdb
-	}, func() interface{} {
-		return &User{}
-	})
+	AddResourceToGin(&Resource{Name: "user"},
+		v1, func() *gorm.DB {
+			return gdb
+		}, func() interface{} {
+			return &User{}
+		})
 
 	// 启动服务
 	s := httptest.NewServer(g)

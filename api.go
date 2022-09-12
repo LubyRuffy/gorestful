@@ -7,12 +7,18 @@ import (
 	"gorm.io/gorm"
 )
 
-// AddResourceToGinRouter 插入到gin的路由中去
+// Resource 资源对象
+type Resource struct {
+	Name   string // 名称
+	Fields string // 字段，*或者空表示所有
+}
+
+// AddResourceToGin 插入到gin的路由中去，形成api
 // name 资源的名称，比如user
 // r gin的group对象，比如绑定了/api/v1
-func AddResourceToGinRouter(name string, r *gin.RouterGroup, getDb func() *gorm.DB, getModel func() interface{}) {
+func AddResourceToGin(res *Resource, r *gin.RouterGroup, getDb func() *gorm.DB, getModel func() interface{}) {
 	// 列表
-	r.GET("/"+name, func(c *gin.Context) {
+	r.GET("/"+res.Name, func(c *gin.Context) {
 		var count int64
 		err := getDb().Model(getModel()).Count(&count).Error
 		if err != nil {
@@ -43,7 +49,7 @@ func AddResourceToGinRouter(name string, r *gin.RouterGroup, getDb func() *gorm.
 	})
 
 	// 新增
-	r.POST("/"+name, func(c *gin.Context) {
+	r.POST("/"+res.Name, func(c *gin.Context) {
 		// 解析
 		model := getModel()
 		err := c.ShouldBindJSON(model)
@@ -82,7 +88,7 @@ func AddResourceToGinRouter(name string, r *gin.RouterGroup, getDb func() *gorm.
 	})
 
 	// 删除
-	r.DELETE("/"+name+"/:id", func(c *gin.Context) {
+	r.DELETE("/"+res.Name+"/:id", func(c *gin.Context) {
 		// 查找
 		model := getModel()
 		err := getDb().Model(model).Find(model, "id=?", c.Param("id")).Error
@@ -110,7 +116,7 @@ func AddResourceToGinRouter(name string, r *gin.RouterGroup, getDb func() *gorm.
 	})
 
 	// 查看
-	r.GET("/"+name+"/:id", func(c *gin.Context) {
+	r.GET("/"+res.Name+"/:id", func(c *gin.Context) {
 		// 查找
 		model := getModel()
 		err := getDb().Model(model).Find(model, "id=?", c.Param("id")).Error

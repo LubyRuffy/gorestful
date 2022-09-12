@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"html/template"
 )
 
 func main() {
@@ -21,13 +22,26 @@ func main() {
 		Email string `json:"email"`
 	}
 
+	err = gdb.AutoMigrate(&User{})
+
+	res := &gorestful.Resource{
+		Name:   "user",
+		Fields: "*",
+	}
+
 	g := gin.Default()
-	v1 := g.Group("/api/v1")
-	gorestful.AddResourceToGinRouter("user", v1, func() *gorm.DB {
+	temp := template.Must(template.New("").Delims("{{{", "}}}").ParseFS(gorestful.FS, "templates/*.html"))
+	g.SetHTMLTemplate(temp)
+
+	apiGroup := g.Group("/api/v1")
+	gorestful.AddResourceToGin(res, apiGroup, func() *gorm.DB {
 		return gdb
 	}, func() interface{} {
 		return &User{}
 	})
+
+	home := g.Group("/")
+	gorestful.AddResourcePageToGin(res, home, apiGroup)
 
 	g.Run(":9999")
 }

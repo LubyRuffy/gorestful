@@ -1,0 +1,42 @@
+<html>
+    <head>
+        <title>{{{ .resource.Name }}} list</title>
+        <script src="https://unpkg.com/vue@3"></script>
+    </head>
+    <body>
+        <h1>
+            {{{ .resource.Name }}} list
+        </h1>
+
+        <div id="resourceDiv" class="demo">
+            <li v-for="res in resources">
+                {{ res.email }}
+            </li>
+        </div>
+
+        <script>
+            const ResourceApp = {
+                data() {
+                    return {
+                        "resources": []
+                    }
+                },
+                created() {
+                    this.getList();
+                },
+                methods:{
+                    getList(){
+                        fetch('{{{ .apiPrefix }}}/{{{ .resource.Name }}}').then(data=>{
+                            return data.json()
+                        }).then((data)=>{
+                            this.resources=data.data.list;
+                            console.log(this.resources);
+                        })
+                    }
+                }
+            }
+
+            Vue.createApp(ResourceApp).mount('#resourceDiv')
+        </script>
+    </body>
+</html>
