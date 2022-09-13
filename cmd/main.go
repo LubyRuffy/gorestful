@@ -6,13 +6,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"html/template"
 	"io/fs"
 	"net/http"
 )
 
 func main() {
-	cfg := &gorm.Config{}
+	cfg := &gorm.Config{Logger: logger.Default.LogMode(logger.Info)}
 	dsn := fmt.Sprintf("%s?journal_mode=%s&busy_timeout=%s", "a.sqlite", "WAL", "9999999")
 	gdb, err := gorm.Open(sqlite.Open(dsn), cfg)
 	if err != nil {
@@ -31,18 +32,18 @@ func main() {
 		Fields: []gorestful.Field{
 			{
 				Name:      "ID",
-				Type:      "string",
+				Type:      "uint",
 				CloseEdit: true,
 			},
 			{
 				Name: "email",
 				Type: "string",
 			},
-			//{
-			//	Name:      "CreatedAt",
-			//	Type:      "datetime",
-			//	CloseEdit: true,
-			//},
+			{
+				Name:      "CreatedAt",
+				Type:      "string",
+				CloseEdit: true,
+			},
 		},
 	}
 

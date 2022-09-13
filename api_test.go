@@ -118,6 +118,17 @@ func TestAddResourceToGin(t *testing.T) {
 	assert.NotNil(t, r)
 	assert.Equal(t, "a@a.com", r["data"].(map[string]interface{})["email"])
 
+	// 修改
+	r, err = postJson(s.URL+prefix+fmt.Sprintf("/user/%v", id), &User{
+		Email: "b@a.com",
+	})
+	assert.Nil(t, err)
+	assert.NotNil(t, r)
+	r, err = getJson(s.URL + prefix + fmt.Sprintf("/user/%v", id))
+	assert.Nil(t, err)
+	assert.NotNil(t, r)
+	assert.Equal(t, "b@a.com", r["data"].(map[string]interface{})["email"])
+
 	// 删除
 	r, err = deleteJson(s.URL + prefix + fmt.Sprintf("/user/%v", id))
 	assert.Nil(t, err)

@@ -165,6 +165,9 @@ func AddResourceToGin(res *Resource, r *gin.RouterGroup, getDb func() *gorm.DB, 
 			return
 		}
 
+		// 删除closeedit的列
+		unsetField(res, modelPost)
+
 		// 修改
 		err = getDb().Model(model).Updates(modelPost).Error
 		if err != nil {
@@ -180,4 +183,49 @@ func AddResourceToGin(res *Resource, r *gin.RouterGroup, getDb func() *gorm.DB, 
 			"data": reflect.ValueOf(model).Elem().FieldByName("ID").Uint(),
 		})
 	})
+}
+
+func unset() {
+
+}
+
+// unsetFieldValue 递归重置closeedit的列
+func unsetFieldValue(res *Resource, v reflect.Value) {
+	for j := 0; j < v.Type().NumField(); j++ {
+		if v.Field(j).Type().Kind() == reflect.Struct {
+			unsetFieldValue(res, v.Field(j))
+		} else {
+			for _, f := range res.Fields {
+				fName := v.Type().Field(j).Name
+				if fName == f.Name {
+					switch f.Type {
+					case "string":
+						v.Field(j).Set(reflect.ValueOf(""))
+					case "int":
+						v.Field(j).Set(reflect.ValueOf(0))
+					case "uint":
+						v.Field(j).Set(reflect.ValueOf(uint(0)))
+					}
+				}
+			}
+		}
+	}
+}
+
+// unsetField 删除closeedit的列
+func unsetField(res *Resource, model interface{}) {
+	v := reflect.ValueOf(model).Elem()
+	typeOfS := v.Type()
+	for i := 0; i < typeOfS.NumField(); i++ {
+		if typeOfS.Field(i).Type.Kind() == reflect.Struct {
+			unsetFieldValue(res, v.Field(i))
+		} else {
+			for _, f := range res.Fields {
+				fName := typeOfS.Field(i).Name
+				if fName == f.Name {
+					v.Field(i).Set(reflect.Value{})
+				}
+			}
+		}
+	}
 }
