@@ -7,10 +7,18 @@ import (
 	"gorm.io/gorm"
 )
 
+type Field struct {
+	Name      string // 字段名称
+	Type      string // 字段类型
+	CloseEdit bool   // 是否停止编辑？比如id或者创建时间之类的应该不让编辑
+	// 格式？
+	// 合法性校验？
+}
+
 // Resource 资源对象
 type Resource struct {
-	Name   string // 名称
-	Fields string // 字段，*或者空表示所有
+	Name   string  // 名称
+	Fields []Field // 字段，*或者空表示所有
 }
 
 // AddResourceToGin 插入到gin的路由中去，形成api
@@ -31,7 +39,7 @@ func AddResourceToGin(res *Resource, r *gin.RouterGroup, getDb func() *gorm.DB, 
 
 		// 相当于： &[]User
 		list := reflect.New(reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf(getModel()).Elem()), 0, 0).Type()).Interface()
-		err = getDb().Model(getModel()).Find(list).Error
+		err = getDb().Model(getModel()).Order("id desc").Find(list).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
@@ -131,6 +139,45 @@ func AddResourceToGin(res *Resource, r *gin.RouterGroup, getDb func() *gorm.DB, 
 		c.JSON(200, gin.H{
 			"code": 200,
 			"data": model,
+		})
+	})
+
+	// 修改
+	r.POST("/"+res.Name+"/:id", func(c *gin.Context) {
+		// 解析
+		model := getModel()
+		err := getDb().Model(model).Find(model, "id=?", c.Param("id")).Error
+		if err != nil {
+			c.JSON(200, gin.H{
+				"code":    500,
+				"message": "not found:" + err.Error(),
+			})
+			return
+		}
+
+		modelPost := getModel()
+		err = c.ShouldBindJSON(modelPost)
+		if err != nil {
+			c.JSON(200, gin.H{
+				"code":    500,
+				"message": "edit failed:" + err.Error(),
+			})
+			return
+		}
+
+		// 修改
+		err = getDb().Model(model).Updates(modelPost).Error
+		if err != nil {
+			c.JSON(200, gin.H{
+				"code":    500,
+				"message": "add failed:" + err.Error(),
+			})
+			return
+		}
+
+		c.JSON(200, gin.H{
+			"code": 200,
+			"data": reflect.ValueOf(model).Elem().FieldByName("ID").Uint(),
 		})
 	})
 }

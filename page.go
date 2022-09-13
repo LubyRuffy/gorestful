@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-//go:embed templates/*
+//go:embed templates/* static/*
 var FS embed.FS
 
 // AddResourcePageToGin 生成页面

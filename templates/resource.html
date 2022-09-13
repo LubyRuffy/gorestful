@@ -1,7 +1,114 @@
 <html>
     <head>
         <title>{{{ .resource.Name }}} list</title>
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+        <style>
+            label, input { display:block; }
+            input.text { margin-bottom:12px; width:95%; padding: .4em; }
+            fieldset { padding:0; border:0; margin-top:25px; }
+            h1 { font-size: 1.2em; margin: .6em 0; }
+            div#users-contain { width: 350px; margin: 20px 0; }
+            div#users-contain table { margin: 1em 0; border-collapse: collapse; width: 100%; }
+            div#users-contain table td, div#users-contain table th { border: 1px solid #eee; padding: .6em 10px; text-align: left; }
+            .ui-dialog .ui-state-error { padding: .3em; }
+            .validateTips { border: 1px solid transparent; padding: 0.3em; }
+        </style>
+
         <script src="https://unpkg.com/vue@3"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+        <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+        <script src="/static/notify.min.js"></script>
+        <script>
+            $( function() {
+                var dialog, form,
+
+                    // From http://www.whatwg.org/specs/web-apps/current-work/multipage/states-of-the-type-attribute.html#e-mail-state-%28type=email%29
+                    emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
+                    name = $( "#name" ),
+                    email = $( "#email" ),
+                    allFields = $( [] ).add( name ).add( email ),
+                    tips = $( ".validateTips" );
+
+                function updateTips( t ) {
+                    tips
+                        .text( t )
+                        .addClass( "ui-state-highlight" );
+                    setTimeout(function() {
+                        tips.removeClass( "ui-state-highlight", 1500 );
+                    }, 500 );
+                }
+
+                function checkLength( o, n, min, max ) {
+                    if ( o.val().length > max || o.val().length < min ) {
+                        o.addClass( "ui-state-error" );
+                        updateTips( "Length of " + n + " must be between " +
+                            min + " and " + max + "." );
+                        return false;
+                    } else {
+                        return true;
+                    }
+                }
+
+                function checkRegexp( o, regexp, n ) {
+                    if ( !( regexp.test( o.val() ) ) ) {
+                        o.addClass( "ui-state-error" );
+                        updateTips( n );
+                        return false;
+                    } else {
+                        return true;
+                    }
+                }
+
+                // function addUser() {
+                //     var valid = true;
+                //     allFields.removeClass( "ui-state-error" );
+                //
+                //     valid = valid && checkLength( name, "username", 3, 16 );
+                //     valid = valid && checkLength( email, "email", 6, 80 );
+                //
+                //     valid = valid && checkRegexp( name, /^[a-z]([0-9a-z_\s])+$/i, "Username may consist of a-z, 0-9, underscores, spaces and must begin with a letter." );
+                //     valid = valid && checkRegexp( email, emailRegex, "eg. ui@jquery.com" );
+                //
+                //     if ( valid ) {
+                //         // $( "#users tbody" ).append( "<tr>" +
+                //         //     "<td>" + name.val() + "</td>" +
+                //         //     "<td>" + email.val() + "</td>" +
+                //         //     "</tr>" );
+                //         dialog.dialog( "close" );
+                //     }
+                //     return valid;
+                // }
+
+                dialog = $( "#dialog-form" ).dialog({
+                    autoOpen: false,
+                    modal: true,
+                    // buttons: {
+                    //     // "Create {{{ .resource.Name }}}": addUser,
+                    //     Cancel: function() {
+                    //         dialog.dialog( "close" );
+                    //     }
+                    // },
+                    close: function() {
+                        form[ 0 ].reset();
+                        allFields.removeClass( "ui-state-error" );
+                    }
+                });
+
+                // form = dialog.find( "form" ).on( "submit", function( event ) {
+                //     event.preventDefault();
+                //     addUser();
+                // });
+
+                $( "#create-user" ).button().on( "click", function() {
+                    dialog.dialog( "open" );
+                });
+
+                dialog1 = $( "#dialog-edit-form" ).dialog({
+                    autoOpen: false,
+                    modal: true,
+                });
+            } );
+        </script>
     </head>
     <body>
         <h1>
@@ -9,9 +116,57 @@
         </h1>
 
         <div id="resourceDiv" class="demo">
-            <li v-for="res in resources">
-                {{ res.email }}
-            </li>
+            <button id="create-user">Create</button>
+            <table id="users" class="ui-widget ui-widget-content" style="width: 100%">
+                <thead>
+                <tr class="ui-widget-header ">
+                    {{{range .resource.Fields}}}
+                    <th>{{{.Name}}}</th>
+                    {{{end}}}
+                    <th>Operation</th>
+                </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="res in resources">
+                        {{{range .resource.Fields}}}
+                        <th>{{ res.{{{.Name}}} }}</th>
+                        {{{end}}}
+                        <td>
+                            <button @click="deleteRes(res.ID)">delete</button>
+                            <button @click="openEditResDialog(res)">edit</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div id="dialog-form" title="Create new {{{ .resource.Name }}}">
+                <p class="validateTips">All form fields are required.</p>
+                <fieldset>
+                    {{{range .resource.Fields}}}
+                    {{{if not .CloseEdit }}}
+                    <label for="{{{.Name}}}">{{{.Name}}}</label>
+                    <input type="text" name="{{{.Name}}}" id="{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all">
+                    {{{end}}}
+                    {{{end}}}
+
+                    <button @click="createRes()">Create</button>
+                </fieldset>
+            </div>
+
+            <div id="dialog-edit-form" title="Edit {{{ .resource.Name }}}">
+                <fieldset>
+                    {{{range .resource.Fields}}}
+                    <label for="{{{.Name}}}">{{{.Name}}}</label>
+                    {{{if not .CloseEdit }}}
+                    <input type="text" name="{{{.Name}}}" id="edit-{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all">
+                    {{{else}}}
+                    <input type="text" name="{{{.Name}}}" id="edit-{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all" disabled>
+                    {{{end}}}
+                    {{{end}}}
+
+                    <button @click="editRes()">Create</button>
+                </fieldset>
+            </div>
         </div>
 
         <script>
@@ -32,6 +187,65 @@
                             this.resources=data.data.list;
                             console.log(this.resources);
                         })
+                    },
+                    deleteRes(id){
+                        var self = this;
+                        $.ajax({
+                            url: '{{{ .apiPrefix }}}/{{{ .resource.Name }}}/'+id,
+                            type: 'DELETE',
+                            success: function(result) {
+                                self.getList();
+                            },
+                            error: function(result){
+                                $.notify(result, "error");
+                            }
+                        });
+                    },
+                    editRes(){
+                        var self = this;
+                        $.ajax({
+                            url: '{{{ .apiPrefix }}}/{{{ .resource.Name }}}/'+$("#edit-ID").val(),
+                            type: 'POST',
+                            contentType: "application/json",
+                            data: this.convertFormToJSON("#dialog-edit-form fieldset"),
+                            success: function(result) {
+                                self.getList();
+                                $( "#dialog-edit-form" ).dialog( "close" );
+                            },
+                            error: function(result){
+                                $.notify(result, "error");
+                            }
+                        });
+                    },
+                    openEditResDialog(res){
+                        {{{range .resource.Fields}}}
+                        $( "#edit-{{{.Name}}}" ).val(res.{{{toJS .Name}}});
+                        {{{end}}}
+                        $( "#dialog-edit-form" ).dialog( "open" );
+                    },
+                    createRes(){
+                        var self = this;
+                        $.ajax({
+                            url: '{{{ .apiPrefix }}}/{{{ .resource.Name }}}',
+                            type: 'POST',
+                            contentType: "application/json",
+                            data: this.convertFormToJSON("#dialog-form fieldset"),
+                            success: function(result) {
+                                self.getList();
+                                $( "#dialog-form" ).dialog("close");
+                            },
+                            error: function(result){
+                                $.notify(result, "error");
+                            }
+                        });
+                    },
+                    convertFormToJSON(form) {
+                        const array = $(form).serializeArray(); // Encodes the set of form elements as an array of names and values.
+                        const json = {};
+                        $.each(array, function () {
+                            json[this.name] = this.value || "";
+                        });
+                        return JSON.stringify(json);
                     }
                 }
             }

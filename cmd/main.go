@@ -7,6 +7,8 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"html/template"
+	"io/fs"
+	"net/http"
 )
 
 func main() {
@@ -25,13 +27,37 @@ func main() {
 	err = gdb.AutoMigrate(&User{})
 
 	res := &gorestful.Resource{
-		Name:   "user",
-		Fields: "*",
+		Name: "user",
+		Fields: []gorestful.Field{
+			{
+				Name:      "ID",
+				Type:      "string",
+				CloseEdit: true,
+			},
+			{
+				Name: "email",
+				Type: "string",
+			},
+			//{
+			//	Name:      "CreatedAt",
+			//	Type:      "datetime",
+			//	CloseEdit: true,
+			//},
+		},
 	}
 
 	g := gin.Default()
-	temp := template.Must(template.New("").Delims("{{{", "}}}").ParseFS(gorestful.FS, "templates/*.html"))
+	temp := template.Must(template.New("").Delims("{{{", "}}}").Funcs(map[string]interface{}{
+		"toJS": func(s string) template.JS {
+			return template.JS(s)
+		},
+	}).ParseFS(gorestful.FS, "templates/*.html"))
 	g.SetHTMLTemplate(temp)
+	fsys, err := fs.Sub(gorestful.FS, "static")
+	if err != nil {
+		panic(err)
+	}
+	g.StaticFS("/static", http.FS(fsys))
 
 	apiGroup := g.Group("/api/v1")
 	gorestful.AddResourceToGin(res, apiGroup, func() *gorm.DB {
