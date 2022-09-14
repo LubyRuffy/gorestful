@@ -27,6 +27,19 @@ func main() {
 
 	err = gdb.AutoMigrate(&User{})
 
+	g := gin.Default()
+	temp := template.Must(template.New("").Delims("{{{", "}}}").Funcs(map[string]interface{}{
+		"toJS": func(s string) template.JS {
+			return template.JS(s)
+		},
+	}).ParseFS(gorestful.FS, "templates/*.html"))
+	g.SetHTMLTemplate(temp)
+	fsys, err := fs.Sub(gorestful.FS, "static")
+	if err != nil {
+		panic(err)
+	}
+	g.StaticFS("/static", http.FS(fsys))
+
 	res := &gorestful.Resource{
 		Name: "user",
 		Fields: []gorestful.Field{
@@ -45,30 +58,19 @@ func main() {
 				CloseEdit: true,
 			},
 		},
+		ApiRouterGroup:  g.Group("/api/v1"),
+		PageRouterGroup: g.Group("/"),
+		GetModel: func() interface{} {
+			return &User{}
+		},
+		GetDb: func() *gorm.DB {
+			return gdb
+		},
 	}
 
-	g := gin.Default()
-	temp := template.Must(template.New("").Delims("{{{", "}}}").Funcs(map[string]interface{}{
-		"toJS": func(s string) template.JS {
-			return template.JS(s)
-		},
-	}).ParseFS(gorestful.FS, "templates/*.html"))
-	g.SetHTMLTemplate(temp)
-	fsys, err := fs.Sub(gorestful.FS, "static")
-	if err != nil {
+	if err = gorestful.AddResourceApiPageToGin(res); err != nil {
 		panic(err)
 	}
-	g.StaticFS("/static", http.FS(fsys))
-
-	apiGroup := g.Group("/api/v1")
-	gorestful.AddResourceToGin(res, apiGroup, func() *gorm.DB {
-		return gdb
-	}, func() interface{} {
-		return &User{}
-	})
-
-	home := g.Group("/")
-	gorestful.AddResourcePageToGin(res, home, apiGroup)
 
 	g.Run(":9999")
 }

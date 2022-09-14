@@ -80,13 +80,16 @@ func TestAddResourceToGin(t *testing.T) {
 
 	g := gin.Default()
 	prefix := "/api/v1"
-	v1 := g.Group(prefix)
-	AddResourceToGin(&Resource{Name: "user"},
-		v1, func() *gorm.DB {
+	AddResourceApiToGin(&Resource{
+		Name:           "user",
+		ApiRouterGroup: g.Group(prefix),
+		GetDb: func() *gorm.DB {
 			return gdb
-		}, func() interface{} {
+		},
+		GetModel: func() interface{} {
 			return &User{}
-		})
+		}},
+	)
 
 	// 启动服务
 	s := httptest.NewServer(g)
