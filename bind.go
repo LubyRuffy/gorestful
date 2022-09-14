@@ -3,6 +3,9 @@ package gorestful
 import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"html/template"
+	"io/fs"
+	"net/http"
 	"reflect"
 )
 
@@ -74,4 +77,19 @@ func unsetField(res *Resource, model interface{}) {
 func AddResourceApiPageToGin(res *Resource) error {
 	AddResourceApiToGin(res)
 	return AddResourcePageToGin(res)
+}
+
+// LoadFS 加载内嵌的模板
+func LoadFS(g *gin.Engine) {
+	temp := template.Must(template.New("").Delims("{{{", "}}}").Funcs(map[string]interface{}{
+		"toJS": func(s string) template.JS {
+			return template.JS(s)
+		},
+	}).ParseFS(FS, "templates/*.html"))
+	g.SetHTMLTemplate(temp)
+	fsys, err := fs.Sub(FS, "static")
+	if err != nil {
+		panic(err)
+	}
+	g.StaticFS("/static", http.FS(fsys))
 }

@@ -7,9 +7,6 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"html/template"
-	"io/fs"
-	"net/http"
 )
 
 func main() {
@@ -28,17 +25,7 @@ func main() {
 	err = gdb.AutoMigrate(&User{})
 
 	g := gin.Default()
-	temp := template.Must(template.New("").Delims("{{{", "}}}").Funcs(map[string]interface{}{
-		"toJS": func(s string) template.JS {
-			return template.JS(s)
-		},
-	}).ParseFS(gorestful.FS, "templates/*.html"))
-	g.SetHTMLTemplate(temp)
-	fsys, err := fs.Sub(gorestful.FS, "static")
-	if err != nil {
-		panic(err)
-	}
-	g.StaticFS("/static", http.FS(fsys))
+	gorestful.LoadFS(g)
 
 	res := &gorestful.Resource{
 		Name: "user",
