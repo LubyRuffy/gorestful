@@ -11,6 +11,7 @@ import (
 
 type Field struct {
 	Name      string // 字段名称
+	JsonName  string // json的名称，可以跟数据库中的字段名称不一样
 	Type      string // 字段类型
 	CloseEdit bool   // 是否停止编辑？比如id或者创建时间之类的应该不让编辑
 	// 格式？
@@ -25,6 +26,44 @@ type Resource struct {
 	PageRouterGroup *gin.RouterGroup // page页面绑定的地址
 	GetDb           func() *gorm.DB
 	GetModel        func() interface{}
+}
+
+// autoFill 自动填充字段
+func (res *Resource) autoFill() {
+	v := reflect.ValueOf(res.GetModel()).Elem()
+	typeOfS := v.Type()
+	for i := 0; i < typeOfS.NumField(); i++ {
+		if typeOfS.Field(i).Type.Kind() == reflect.Struct {
+			// 结构, gorm.model
+			for j := 0; j < v.Field(i).Type().NumField(); j++ {
+				res.Fields = append(res.Fields, Field{
+					Name:      v.Field(i).Type().Field(j).Name,
+					Type:      v.Field(i).Type().Field(j).Type.Name(),
+					JsonName:  v.Field(i).Type().Field(j).Tag.Get("json"),
+					CloseEdit: true,
+				})
+			}
+		} else {
+			tag := typeOfS.Field(i).Tag
+			res.Fields = append(res.Fields, Field{
+				Name:      typeOfS.Field(i).Name,
+				Type:      typeOfS.Field(i).Type.Name(),
+				JsonName:  tag.Get("json"),
+				CloseEdit: false,
+			})
+		}
+	}
+}
+
+// AddResourceApiPageToGin 增加api和page页面到gin路由
+func AddResourceApiPageToGin(res *Resource) error {
+	if res.Fields == nil {
+		// 自动提取
+		res.autoFill()
+	}
+
+	AddResourceApiToGin(res)
+	return AddResourcePageToGin(res)
 }
 
 // unsetByType 根据res字段的类型来充值初始值
@@ -71,12 +110,6 @@ func unsetField(res *Resource, model interface{}) {
 			}
 		}
 	}
-}
-
-// AddResourceApiPageToGin 增加api和page页面到gin路由
-func AddResourceApiPageToGin(res *Resource) error {
-	AddResourceApiToGin(res)
-	return AddResourcePageToGin(res)
 }
 
 // LoadFS 加载内嵌的模板

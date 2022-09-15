@@ -29,22 +29,22 @@ func main() {
 
 	res := &gorestful.Resource{
 		Name: "user",
-		Fields: []gorestful.Field{
-			{
-				Name:      "ID",
-				Type:      "uint",
-				CloseEdit: true,
-			},
-			{
-				Name: "email",
-				Type: "string",
-			},
-			{
-				Name:      "CreatedAt",
-				Type:      "string",
-				CloseEdit: true,
-			},
-		},
+		//Fields: []gorestful.Field{
+		//	{
+		//		Name:      "ID",
+		//		Type:      "uint",
+		//		CloseEdit: true,
+		//	},
+		//	{
+		//		Name: "email",
+		//		Type: "string",
+		//	},
+		//	{
+		//		Name:      "CreatedAt",
+		//		Type:      "string",
+		//		CloseEdit: true,
+		//	},
+		//},
 		ApiRouterGroup:  g.Group("/api/v1"),
 		PageRouterGroup: g.Group("/"),
 		GetModel: func() interface{} {
