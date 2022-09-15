@@ -28,6 +28,20 @@ type Resource struct {
 	GetModel        func() interface{}
 }
 
+// addValue 解析一个StructField为field
+func (res *Resource) addValue(val reflect.StructField) {
+	jsonName := val.Tag.Get("json")
+	if jsonName == "" {
+		jsonName = val.Name
+	}
+	res.Fields = append(res.Fields, Field{
+		Name:      val.Name,
+		Type:      val.Type.Name(),
+		JsonName:  jsonName,
+		CloseEdit: true,
+	})
+}
+
 // autoFill 自动填充字段
 func (res *Resource) autoFill() {
 	v := reflect.ValueOf(res.GetModel()).Elem()
@@ -36,29 +50,14 @@ func (res *Resource) autoFill() {
 		if typeOfS.Field(i).Type.Kind() == reflect.Struct {
 			// 结构, gorm.model
 			for j := 0; j < v.Field(i).Type().NumField(); j++ {
-				jsonName := v.Field(i).Type().Field(j).Tag.Get("json")
-				if jsonName == "" {
-					jsonName = v.Field(i).Type().Field(j).Name
+				val := v.Field(i).Type().Field(j)
+				if "DeletedAt" == val.Name {
+					continue
 				}
-				res.Fields = append(res.Fields, Field{
-					Name:      v.Field(i).Type().Field(j).Name,
-					Type:      v.Field(i).Type().Field(j).Type.Name(),
-					JsonName:  jsonName,
-					CloseEdit: true,
-				})
+				res.addValue(val)
 			}
 		} else {
-			tag := typeOfS.Field(i).Tag
-			jsonName := tag.Get("json")
-			if jsonName == "" {
-				jsonName = typeOfS.Field(i).Name
-			}
-			res.Fields = append(res.Fields, Field{
-				Name:      typeOfS.Field(i).Name,
-				Type:      typeOfS.Field(i).Type.Name(),
-				JsonName:  jsonName,
-				CloseEdit: false,
-			})
+			res.addValue(typeOfS.Field(i))
 		}
 	}
 }
