@@ -129,7 +129,7 @@
                 <tbody>
                     <tr v-for="res in resources">
                         {{{range .resource.Fields}}}
-                        <th>{{ res.{{{.Name}}} }}</th>
+                        <th>{{ res.{{{.JsonName}}} }}</th>
                         {{{end}}}
                         <td>
                             <button @click="deleteRes(res.ID)">delete</button>
@@ -219,7 +219,7 @@
                     },
                     openEditResDialog(res){
                         {{{range .resource.Fields}}}
-                        $( "#edit-{{{.Name}}}" ).val(res.{{{toJS .Name}}});
+                        $( "#edit-{{{.Name}}}" ).val(res.{{{toJS .JsonName}}});
                         {{{end}}}
                         $( "#dialog-edit-form" ).dialog( "open" );
                     },

@@ -36,19 +36,27 @@ func (res *Resource) autoFill() {
 		if typeOfS.Field(i).Type.Kind() == reflect.Struct {
 			// 结构, gorm.model
 			for j := 0; j < v.Field(i).Type().NumField(); j++ {
+				jsonName := v.Field(i).Type().Field(j).Tag.Get("json")
+				if jsonName == "" {
+					jsonName = v.Field(i).Type().Field(j).Name
+				}
 				res.Fields = append(res.Fields, Field{
 					Name:      v.Field(i).Type().Field(j).Name,
 					Type:      v.Field(i).Type().Field(j).Type.Name(),
-					JsonName:  v.Field(i).Type().Field(j).Tag.Get("json"),
+					JsonName:  jsonName,
 					CloseEdit: true,
 				})
 			}
 		} else {
 			tag := typeOfS.Field(i).Tag
+			jsonName := tag.Get("json")
+			if jsonName == "" {
+				jsonName = typeOfS.Field(i).Name
+			}
 			res.Fields = append(res.Fields, Field{
 				Name:      typeOfS.Field(i).Name,
 				Type:      typeOfS.Field(i).Type.Name(),
-				JsonName:  tag.Get("json"),
+				JsonName:  jsonName,
 				CloseEdit: false,
 			})
 		}
