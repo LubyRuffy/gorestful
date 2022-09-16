@@ -6,6 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type Page struct {
+	Offset int `form:"offset"`
+	Limit  int `form:"limit"`
+}
+
 // AddResourceApiToGin 插入到gin的路由中去，形成api
 // name 资源的名称，比如user
 // r gin的group对象，比如绑定了/api/v1
@@ -27,9 +32,21 @@ func AddResourceApiToGin(res *Resource) {
 			return
 		}
 
+		var page Page
+		if err = c.ShouldBindQuery(&page); err != nil {
+			c.JSON(200, gin.H{
+				"code":    500,
+				"message": "list failed:" + err.Error(),
+			})
+			return
+		}
+		if page.Limit == 0 {
+			page.Limit = 10
+		}
+
 		// 相当于： &[]User
 		list := reflect.New(reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf(res.GetModel()).Elem()), 0, 0).Type()).Interface()
-		err = res.GetDb().Model(res.GetModel()).Order("id desc").Find(list).Error
+		err = res.GetDb().Model(res.GetModel()).Order("id desc").Limit(page.Limit).Offset(page.Offset).Find(list).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
