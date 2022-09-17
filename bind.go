@@ -22,6 +22,7 @@ type Field struct {
 type Resource struct {
 	Name            string           // 名称
 	Fields          []Field          // 字段，*或者空表示所有
+	BlackFields     []string         // 黑名单字段，不进行显示和编辑
 	ApiRouterGroup  *gin.RouterGroup // api绑定的地址
 	PageRouterGroup *gin.RouterGroup // page页面绑定的地址
 	GetDb           func() *gorm.DB
@@ -29,7 +30,12 @@ type Resource struct {
 }
 
 // addValue 解析一个StructField为field
-func (res *Resource) addValue(val reflect.StructField) {
+func (res *Resource) addValue(val reflect.StructField, closeEdit bool) {
+	// 是否黑名单
+	if res.isBlackField(val.Name) {
+		return
+	}
+
 	jsonName := val.Tag.Get("json")
 	if jsonName == "" {
 		jsonName = val.Name
@@ -38,8 +44,18 @@ func (res *Resource) addValue(val reflect.StructField) {
 		Name:      val.Name,
 		Type:      val.Type.Name(),
 		JsonName:  jsonName,
-		CloseEdit: true,
+		CloseEdit: closeEdit,
 	})
+}
+
+// isBlackField 是否黑名单
+func (res *Resource) isBlackField(name string) bool {
+	for _, blackField := range res.BlackFields {
+		if blackField == name {
+			return true
+		}
+	}
+	return false
 }
 
 // autoFill 自动填充字段
@@ -54,10 +70,11 @@ func (res *Resource) autoFill() {
 				if "DeletedAt" == val.Name {
 					continue
 				}
-				res.addValue(val)
+
+				res.addValue(val, true)
 			}
 		} else {
-			res.addValue(typeOfS.Field(i))
+			res.addValue(typeOfS.Field(i), false)
 		}
 	}
 }
@@ -92,6 +109,10 @@ func unsetFieldValue(res *Resource, v reflect.Value) {
 			unsetFieldValue(res, v.Field(j))
 		} else {
 			for _, f := range res.Fields {
+				if !f.CloseEdit {
+					continue
+				}
+
 				fName := v.Type().Field(j).Name
 				if fName == f.Name {
 					unsetByType(f.Type, v.Field(j))
@@ -110,6 +131,10 @@ func unsetField(res *Resource, model interface{}) {
 			unsetFieldValue(res, v.Field(i))
 		} else {
 			for _, f := range res.Fields {
+				if !f.CloseEdit {
+					continue
+				}
+
 				fName := typeOfS.Field(i).Name
 				if fName == f.Name {
 					unsetByType(f.Type, v.Field(i))

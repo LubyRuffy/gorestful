@@ -14,77 +14,19 @@
             .validateTips { border: 1px solid transparent; padding: 0.3em; }
         </style>
 
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+        <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.2.1/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://unpkg.com/font-awesome@4.7.0/css/font-awesome.min.css">
+<!--        <link rel="stylesheet" href="https://unpkg.com/bootstrap-icons@1.9.1/font/bootstrap-icons.css">-->
         <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.21.0/dist/bootstrap-table.min.css">
 
-
-        <script src="https://unpkg.com/vue@3"></script>
-        <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
-        <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
-        <script src="https://unpkg.com/bootstrap"></script>
+        <script src="https://unpkg.com/jquery"></script>
+        <script src="https://unpkg.com/jquery-ui@1.13.2/dist/jquery-ui.min.js"></script>
+        <script src="https://unpkg.com/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"></script>
         <script src="https://unpkg.com/bootstrap-table"></script>
         <script src="/static/notify.min.js"></script>
         <script>
             $( function() {
-                var dialog, form,
-
-                    // From http://www.whatwg.org/specs/web-apps/current-work/multipage/states-of-the-type-attribute.html#e-mail-state-%28type=email%29
-                    emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
-                    name = $( "#name" ),
-                    email = $( "#email" ),
-                    allFields = $( [] ).add( name ).add( email ),
-                    tips = $( ".validateTips" );
-
-                function updateTips( t ) {
-                    tips
-                        .text( t )
-                        .addClass( "ui-state-highlight" );
-                    setTimeout(function() {
-                        tips.removeClass( "ui-state-highlight", 1500 );
-                    }, 500 );
-                }
-
-                function checkLength( o, n, min, max ) {
-                    if ( o.val().length > max || o.val().length < min ) {
-                        o.addClass( "ui-state-error" );
-                        updateTips( "Length of " + n + " must be between " +
-                            min + " and " + max + "." );
-                        return false;
-                    } else {
-                        return true;
-                    }
-                }
-
-                function checkRegexp( o, regexp, n ) {
-                    if ( !( regexp.test( o.val() ) ) ) {
-                        o.addClass( "ui-state-error" );
-                        updateTips( n );
-                        return false;
-                    } else {
-                        return true;
-                    }
-                }
-
-                // function addUser() {
-                //     var valid = true;
-                //     allFields.removeClass( "ui-state-error" );
-                //
-                //     valid = valid && checkLength( name, "username", 3, 16 );
-                //     valid = valid && checkLength( email, "email", 6, 80 );
-                //
-                //     valid = valid && checkRegexp( name, /^[a-z]([0-9a-z_\s])+$/i, "Username may consist of a-z, 0-9, underscores, spaces and must begin with a letter." );
-                //     valid = valid && checkRegexp( email, emailRegex, "eg. ui@jquery.com" );
-                //
-                //     if ( valid ) {
-                //         // $( "#users tbody" ).append( "<tr>" +
-                //         //     "<td>" + name.val() + "</td>" +
-                //         //     "<td>" + email.val() + "</td>" +
-                //         //     "</tr>" );
-                //         dialog.dialog( "close" );
-                //     }
-                //     return valid;
-                // }
+                var dialog;
 
                 dialog = $( "#dialog-form" ).dialog({
                     autoOpen: false,
@@ -96,8 +38,8 @@
                     //     }
                     // },
                     close: function() {
-                        form[ 0 ].reset();
-                        allFields.removeClass( "ui-state-error" );
+                        // form[ 0 ].reset();
+                        // allFields.removeClass( "ui-state-error" );
                     }
                 });
 
@@ -124,27 +66,6 @@
 
         <div id="resourceDiv" class="demo">
             <button id="create-user">Create</button>
-<!--            <table id="users" class="ui-widget ui-widget-content" style="width: 100%">-->
-<!--                <thead>-->
-<!--                <tr class="ui-widget-header ">-->
-<!--                    {{{range .resource.Fields}}}-->
-<!--                    <th>{{{.Name}}}</th>-->
-<!--                    {{{end}}}-->
-<!--                    <th>Operation</th>-->
-<!--                </tr>-->
-<!--                </thead>-->
-<!--                <tbody>-->
-<!--                    <tr v-for="res in resources">-->
-<!--                        {{{range .resource.Fields}}}-->
-<!--                        <th>{{ res.{{{.JsonName}}} }}</th>-->
-<!--                        {{{end}}}-->
-<!--                        <td>-->
-<!--                            <button @click="deleteRes(res.ID)">delete</button>-->
-<!--                            <button @click="openEditResDialog(res)">edit</button>-->
-<!--                        </td>-->
-<!--                    </tr>-->
-<!--                </tbody>-->
-<!--            </table>-->
 
             <table id="table"></table>
 
@@ -158,7 +79,7 @@
                     {{{end}}}
                     {{{end}}}
 
-                    <button @click="createRes()">Create</button>
+                    <button onclick="createRes()">Create</button>
                 </fieldset>
             </div>
 
@@ -173,13 +94,58 @@
                     {{{end}}}
                     {{{end}}}
 
-                    <button @click="editRes()">Edit</button>
+                    <button onclick="editRes()">Edit</button>
                 </fieldset>
             </div>
         </div>
 
         <script>
-            $(document).ready(function () {
+            function convertFormToJSON(form) {
+                const array = $(form).serializeArray(); // Encodes the set of form elements as an array of names and values.
+                const json = {};
+                $.each(array, function () {
+                    json[this.name] = this.value || "";
+                });
+                return JSON.stringify(json);
+            }
+
+            function refreshData() {
+                $('#table').bootstrapTable('refresh');
+            }
+
+            function createRes(){
+                $.ajax({
+                    url: '{{{ .apiPrefix }}}/{{{ .resource.Name }}}',
+                    type: 'POST',
+                    contentType: "application/json",
+                    data: this.convertFormToJSON("#dialog-form fieldset"),
+                    success: function(result) {
+                        refreshData();
+                        $( "#dialog-form" ).dialog("close");
+                    },
+                    error: function(result){
+                        $.notify(result, "error");
+                    }
+                });
+            }
+
+            function editRes(){
+                $.ajax({
+                    url: '{{{ .apiPrefix }}}/{{{ .resource.Name }}}/'+$("#edit-ID").val(),
+                    type: 'POST',
+                    contentType: "application/json",
+                    data: this.convertFormToJSON("#dialog-edit-form fieldset"),
+                    success: function(result) {
+                        $.notify(result, "success");
+                        refreshData();
+                        $( "#dialog-edit-form" ).dialog( "close" );
+                    },
+                    error: function(result){
+                        $.notify(result, "error");
+                    }
+                });
+            }
+            function initTable() {
                 $('#table').bootstrapTable({
                     url: '{{{ .apiPrefix }}}/{{{ .resource.Name }}}',
                     pagination: true,
@@ -194,120 +160,51 @@
                         }
                     },
                     columns: [
-                    {{{range .resource.Fields}}}
-                    {
-                        field: '{{{.JsonName}}}',
-                        title: '{{{.Name}}}'
-                    },
-                    {{{end}}}
-                    {
-                        title: 'Operation',
-                        formatter: function() {
-                            return [
-                                '<a class="like" href="javascript:void(0)" title="Like">',
-                                '<i class="fa fa-heart"></i>',
-                                '</a>  ',
-                                '<a class="remove" href="javascript:void(0)" title="Remove">',
-                                '<i class="fa fa-trash"></i>',
-                                '</a>'
-                            ].join('')
+                        {{{range .resource.Fields}}}
+                        {
+                            field: '{{{.JsonName}}}',
+                            title: '{{{.Name}}}'
                         },
-                        events: {
-                            'click .like': function (e, value, row, index) {
-                                alert('You click like action, row: ' + JSON.stringify(row))
+                        {{{end}}}
+                        {
+                            title: 'Operation',
+                            formatter: function() {
+                                return [
+                                    '<a class="like" href="javascript:void(0)" title="Edit">',
+                                    '<i class="fa fa-edit">Edit</i>',
+                                    '</a>  ',
+                                    '<a class="remove" href="javascript:void(0)" title="Delete">',
+                                    '<i class="fa fa-trash">Delete</i>',
+                                    '</a>'
+                                ].join('')
                             },
-                            'click .remove': function (e, value, row, index) {
-                                $table.bootstrapTable('remove', {
-                                    field: 'id',
-                                    values: [row.id]
-                                })
+                            events: {
+                                'click .like': function (e, value, row, index) {
+                                    {{{range .resource.Fields}}}
+                                    $( "#edit-{{{.Name}}}" ).val(row.{{{toJS .JsonName}}});
+                                    {{{end}}}
+                                    $( "#dialog-edit-form" ).dialog( "open" );
+                                },
+                                'click .remove': function (e, value, row, index) {
+                                    $.ajax({
+                                        url: '{{{ .apiPrefix }}}/{{{ .resource.Name }}}/'+row.ID,
+                                        type: 'DELETE',
+                                        success: function(result) {
+                                            $.notify(result, "success");
+                                            refreshData();
+                                        },
+                                        error: function(result){
+                                            $.notify(result, "error");
+                                        }
+                                    });
+                                }
                             }
                         }
-                    }
                     ]
                 })
-            })
-            const ResourceApp = {
-                data() {
-                    return {
-                        "resources": []
-                    }
-                },
-                created() {
-                    this.getList();
-                },
-                methods:{
-                    getList(){
-                        fetch('{{{ .apiPrefix }}}/{{{ .resource.Name }}}').then(data=>{
-                            return data.json()
-                        }).then((data)=>{
-                            this.resources=data.data.list;
-                            console.log(this.resources);
-                        })
-                    },
-                    deleteRes(id){
-                        var self = this;
-                        $.ajax({
-                            url: '{{{ .apiPrefix }}}/{{{ .resource.Name }}}/'+id,
-                            type: 'DELETE',
-                            success: function(result) {
-                                self.getList();
-                            },
-                            error: function(result){
-                                $.notify(result, "error");
-                            }
-                        });
-                    },
-                    editRes(){
-                        var self = this;
-                        $.ajax({
-                            url: '{{{ .apiPrefix }}}/{{{ .resource.Name }}}/'+$("#edit-ID").val(),
-                            type: 'POST',
-                            contentType: "application/json",
-                            data: this.convertFormToJSON("#dialog-edit-form fieldset"),
-                            success: function(result) {
-                                self.getList();
-                                $( "#dialog-edit-form" ).dialog( "close" );
-                            },
-                            error: function(result){
-                                $.notify(result, "error");
-                            }
-                        });
-                    },
-                    openEditResDialog(res){
-                        {{{range .resource.Fields}}}
-                        $( "#edit-{{{.Name}}}" ).val(res.{{{toJS .JsonName}}});
-                        {{{end}}}
-                        $( "#dialog-edit-form" ).dialog( "open" );
-                    },
-                    createRes(){
-                        var self = this;
-                        $.ajax({
-                            url: '{{{ .apiPrefix }}}/{{{ .resource.Name }}}',
-                            type: 'POST',
-                            contentType: "application/json",
-                            data: this.convertFormToJSON("#dialog-form fieldset"),
-                            success: function(result) {
-                                self.getList();
-                                $( "#dialog-form" ).dialog("close");
-                            },
-                            error: function(result){
-                                $.notify(result, "error");
-                            }
-                        });
-                    },
-                    convertFormToJSON(form) {
-                        const array = $(form).serializeArray(); // Encodes the set of form elements as an array of names and values.
-                        const json = {};
-                        $.each(array, function () {
-                            json[this.name] = this.value || "";
-                        });
-                        return JSON.stringify(json);
-                    }
-                }
             }
 
-            Vue.createApp(ResourceApp).mount('#resourceDiv')
+            $(document).ready(initTable);
         </script>
     </body>
 </html>

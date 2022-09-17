@@ -45,6 +45,7 @@ func main() {
 		//		CloseEdit: true,
 		//	},
 		//},
+		BlackFields:     []string{"CreatedAt"},
 		ApiRouterGroup:  g.Group("/api/v1"),
 		PageRouterGroup: g.Group("/"),
 		GetModel: func() interface{} {
