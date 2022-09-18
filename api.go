@@ -7,8 +7,9 @@ import (
 )
 
 type Page struct {
-	Offset int `form:"offset"`
-	Limit  int `form:"limit"`
+	Search string `form:"search"`
+	Offset int    `form:"offset"`
+	Limit  int    `form:"limit"`
 }
 
 // AddResourceApiToGin 插入到gin的路由中去，形成api
@@ -22,18 +23,8 @@ func AddResourceApiToGin(res *Resource) {
 
 	// 列表
 	res.ApiRouterGroup.GET("/"+res.Name, func(c *gin.Context) {
-		var count int64
-		err := res.GetDb().Model(res.GetModel()).Count(&count).Error
-		if err != nil {
-			c.JSON(200, gin.H{
-				"code":    500,
-				"message": "list failed:" + err.Error(),
-			})
-			return
-		}
-
 		var page Page
-		if err = c.ShouldBindQuery(&page); err != nil {
+		if err := c.ShouldBindQuery(&page); err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
 				"message": "list failed:" + err.Error(),
@@ -46,7 +37,34 @@ func AddResourceApiToGin(res *Resource) {
 
 		// 相当于： &[]User
 		list := reflect.New(reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf(res.GetModel()).Elem()), 0, 0).Type()).Interface()
-		err = res.GetDb().Model(res.GetModel()).Order("id desc").Limit(page.Limit).Offset(page.Offset).Find(list).Error
+		q := res.GetDb().Model(res.GetModel())
+		if len(page.Search) > 0 {
+			query := ""
+			var querySearch []interface{}
+			for _, f := range res.Fields {
+				if f.CloseEdit {
+					continue
+				}
+				if len(query) > 0 {
+					query += " or "
+				}
+				query += f.Name + " like ? "
+				querySearch = append(querySearch, "%"+page.Search+"%")
+			}
+			q = q.Where(query, querySearch...)
+		}
+
+		var count int64
+		err := q.Count(&count).Error
+		if err != nil {
+			c.JSON(200, gin.H{
+				"code":    500,
+				"message": "list failed:" + err.Error(),
+			})
+			return
+		}
+
+		err = q.Order("id desc").Limit(page.Limit).Offset(page.Offset).Find(list).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
