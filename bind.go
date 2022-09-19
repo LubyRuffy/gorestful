@@ -42,7 +42,7 @@ func (res *Resource) addValue(val reflect.StructField, closeEdit bool) {
 	}
 	res.Fields = append(res.Fields, Field{
 		Name:      val.Name,
-		Type:      val.Type.Name(),
+		Type:      val.Type.String(),
 		JsonName:  jsonName,
 		CloseEdit: closeEdit,
 	})
@@ -64,7 +64,24 @@ func (res *Resource) autoFill() {
 	typeOfS := v.Type()
 	for i := 0; i < typeOfS.NumField(); i++ {
 		if typeOfS.Field(i).Type.Kind() == reflect.Struct {
-			// 结构, gorm.model
+			//log.Println(typeOfS.Field(i).Type.String()) sql.NullTime
+			//log.Println(typeOfS.Field(i).Type.Name()) NullTime
+			if typeOfS.Field(i).Type.String() == "sql.NullTime" {
+				//res.addValue(typeOfS.Field(i), true)
+				jsonName := typeOfS.Field(i).Tag.Get("json")
+				if jsonName == "" {
+					jsonName = typeOfS.Field(i).Name
+				}
+				res.Fields = append(res.Fields, Field{
+					Name:      typeOfS.Field(i).Name,
+					Type:      typeOfS.Field(i).Type.Name(),
+					JsonName:  typeOfS.Field(i).Tag.Get("json"),
+					CloseEdit: false,
+				})
+				continue
+			}
+
+			// 结构, gorm.model / sql.NullTime
 			for j := 0; j < v.Field(i).Type().NumField(); j++ {
 				val := v.Field(i).Type().Field(j)
 				if "DeletedAt" == val.Name {

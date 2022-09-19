@@ -12,6 +12,35 @@ type Page struct {
 	Limit  int    `form:"limit"`
 }
 
+func processReflectList(res *Resource, list interface{}) []map[string]interface{} {
+	// 遍历进行替换处理
+	var list1 []map[string]interface{}
+	s := reflect.ValueOf(list).Elem()
+	for i := 0; i < s.Len(); i++ {
+		m := make(map[string]interface{})
+		for _, f := range res.Fields {
+			v := s.Index(i).FieldByName(f.Name)
+			if v.Type().Kind() == reflect.Struct {
+				switch v.Type().String() {
+				case "sql.NullTime":
+					if v.FieldByName("Valid").Bool() {
+						m[f.JsonName] = v.FieldByName("Time").Interface()
+					} else {
+						m[f.JsonName] = ""
+					}
+				case "gorm.Model":
+				default:
+					m[f.JsonName] = v.Interface()
+				}
+			} else {
+				m[f.JsonName] = v.Interface()
+			}
+		}
+		list1 = append(list1, m)
+	}
+	return list1
+}
+
 // AddResourceApiToGin 插入到gin的路由中去，形成api
 // name 资源的名称，比如user
 // r gin的group对象，比如绑定了/api/v1
@@ -72,11 +101,12 @@ func AddResourceApiToGin(res *Resource) {
 			})
 			return
 		}
+
 		c.JSON(200, gin.H{
 			"code": 200,
 			"data": gin.H{
 				"count": count,
-				"list":  list,
+				"list":  processReflectList(res, list),
 			},
 		})
 	})
