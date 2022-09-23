@@ -158,6 +158,18 @@
                             total: res["data"]["count"]
                         }
                     },
+                    {{{ if .resource.AuthMiddle }}}
+                    ajaxOptions: { headers: { '{{{ .resource.AuthMiddle.HeaderKey }}}': '{{{.resource.AuthMiddle.HeaderValuePrefix}}}' + localStorage.getItem("access_token") }},
+                    {{{ end }}}
+                    onLoadError: function(status, err) {
+                        $.notify(status, 'error');
+                        {{{ if .resource.AuthMiddle }}}
+                        if (status == 403) {
+                            window.location.href = {{{ .resource.AuthMiddle.URL }}}
+                            // localStorage.setItem("access_token", "123");
+                        }
+                        {{{ end }}}
+                    },
                     columns: [
                         {{{range .resource.Fields}}}
                         {

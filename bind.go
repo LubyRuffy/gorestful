@@ -27,6 +27,7 @@ type Resource struct {
 	PageRouterGroup *gin.RouterGroup // page页面绑定的地址
 	GetDb           func() *gorm.DB
 	GetModel        func() interface{}
+	AuthMiddle      *AuthMiddle // 认证中间件
 }
 
 // addValue 解析一个StructField为field

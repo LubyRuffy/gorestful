@@ -1,0 +1,13 @@
+<div>
+    <p>{{{.Error}}}</p>
+    <form action="{{{.URL}}}" method="post">
+        {{{range .LoginFields}}}
+        <p>
+            <label for="{{{.Name}}}">{{{.DisplayName}}}</label>
+            <input type="{{{.Type}}}" name="{{{.Name}}}" value="">
+        </p>
+        {{{end}}}
+
+        <button type="submit">Submit</button>
+    </form>
+</div>
