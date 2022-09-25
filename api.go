@@ -20,6 +20,11 @@ func processReflectList(res *Resource, list interface{}) []map[string]interface{
 		m := make(map[string]interface{})
 		for _, f := range res.Fields {
 			v := s.Index(i).FieldByName(f.Name)
+			// 存在空值的情况
+			if !v.IsValid() {
+				m[f.JsonName] = nil
+				continue
+			}
 			if v.Type().Kind() == reflect.Struct {
 				switch v.Type().String() {
 				case "sql.NullTime":

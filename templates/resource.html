@@ -74,7 +74,16 @@
                     {{{range .resource.Fields}}}
                     {{{if not .CloseEdit }}}
                     <label for="{{{.Name}}}">{{{.Name}}}</label>
-                    <input type="text" name="{{{.Name}}}" id="{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all">
+
+                    {{{if eq .Type "bool" }}}
+                    <select name="{{{.Name}}}" id="{{{.Name}}}" datatype="{{{.Type}}}">
+                        <option value="0">false</option>
+                        <option value="1">true</option>
+                    </select><br/>
+                    {{{else }}}
+                    <input type="text" name="{{{.Name}}}" id="{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all" datatype="{{{.Type}}}">
+                    {{{end}}}
+
                     {{{end}}}
                     {{{end}}}
 
@@ -102,8 +111,34 @@
             function convertFormToJSON(form) {
                 const array = $(form).serializeArray(); // Encodes the set of form elements as an array of names and values.
                 const json = {};
+                const f = $(form)[0];
                 $.each(array, function () {
-                    json[this.name] = this.value || "";
+                    const n = f.querySelector('[name="' + this.name + '"]');
+                    switch (n.getAttribute('datatype')) {
+                        case "uint":
+                        case "int":
+                        case "int32":
+                        case "int64":
+                            json[this.name] = parseInt(this.value);
+                            break;
+                        case "bool":
+                            switch (this.value) {
+                                case "1":
+                                case "true":
+                                    json[this.name] = true;
+                                default:
+                                    json[this.name] = false;
+                            }
+                            break;
+                        default:
+                            json[this.name] = this.value || "";
+                            break;
+                    }
+                    // if(n.getAttribute('datatype') == "uint" || n.getAttribute('datatype') == "int" || n.getAttribute('datatype') == "int64") {
+                    //     json[this.name] = parseInt(this.value);
+                    // } else {
+                    //     json[this.name] = this.value || "";
+                    // }
                 });
                 return JSON.stringify(json);
             }
@@ -119,6 +154,10 @@
                     contentType: "application/json",
                     data: this.convertFormToJSON("#dialog-form fieldset"),
                     success: function(result) {
+                        if(result.code==500) {
+                            $.notify(result.message, "error");
+                            return;
+                        }
                         refreshData();
                         $( "#dialog-form" ).dialog("close");
                     },
@@ -135,6 +174,10 @@
                     contentType: "application/json",
                     data: this.convertFormToJSON("#dialog-edit-form fieldset"),
                     success: function(result) {
+                        if(result.code==500) {
+                            $.notify(result.message, "error");
+                            return;
+                        }
                         $.notify(result, "success");
                         refreshData();
                         $( "#dialog-edit-form" ).dialog( "close" );
