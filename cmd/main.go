@@ -34,7 +34,7 @@ func main() {
 	auth := true //打卡认证
 	if auth {
 		type MyClaims struct {
-			jwt.StandardClaims
+			jwt.RegisteredClaims
 			Username string
 		}
 

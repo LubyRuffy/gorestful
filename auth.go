@@ -22,7 +22,7 @@ type EmbedLogin struct {
 	RouterGroup *gin.RouterGroup                                              // 登录挂载的地址
 	Name        string                                                        // 登录的名称，默认是login，可以是其他的
 	LoginFields []LoginField                                                  // 登录表单列表
-	CheckValid  func(e *EmbedLogin, formMap map[string]string) (string, bool) // 是否有效的账号
+	CheckValid  func(e *EmbedLogin, formMap map[string]string) (string, bool) // 是否有效的账号，返回值为token和是否有效
 	Error       string                                                        // 错误提示
 	Key         []byte                                                        // key的内容，用于jwt加密
 }
@@ -110,7 +110,7 @@ func (e EmbedLogin) URL() string {
 }
 
 type AuthMiddle struct {
-	URL               string   // 跳转的地址
+	URL               string   // 跳转的地址，可以不填，就由AuthMode.URL来获取
 	HeaderKey         string   // auth的header头对应的key，默认是Authorization，可以自行修改
 	HeaderValuePrefix string   // auth的header头对应的value前缀，比如Token
 	AuthMode          AuthMode // 是否内嵌登录
