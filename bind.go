@@ -37,13 +37,17 @@ func (res *Resource) addValue(val reflect.StructField, closeEdit bool) {
 		return
 	}
 
+	// ProxyLevel => models.ProxyAnonymityLevel => int
+	//log.Println(val.Name, "=>", val.Type.String(), "=>", val.Type.Kind().String())
+
 	jsonName := val.Tag.Get("json")
 	if jsonName == "" {
 		jsonName = val.Name
 	}
+
 	res.Fields = append(res.Fields, Field{
 		Name:      val.Name,
-		Type:      val.Type.String(),
+		Type:      val.Type.Kind().String(), // 不能用val.Type.String()
 		JsonName:  jsonName,
 		CloseEdit: closeEdit,
 	})
@@ -69,16 +73,17 @@ func (res *Resource) autoFill() {
 			//log.Println(typeOfS.Field(i).Type.Name()) NullTime
 			if typeOfS.Field(i).Type.String() == "sql.NullTime" {
 				//res.addValue(typeOfS.Field(i), true)
-				jsonName := typeOfS.Field(i).Tag.Get("json")
-				if jsonName == "" {
-					jsonName = typeOfS.Field(i).Name
-				}
-				res.Fields = append(res.Fields, Field{
-					Name:      typeOfS.Field(i).Name,
-					Type:      typeOfS.Field(i).Type.Name(),
-					JsonName:  typeOfS.Field(i).Tag.Get("json"),
-					CloseEdit: false,
-				})
+				// 暂时不支持sql.NullTime
+				//jsonName := typeOfS.Field(i).Tag.Get("json")
+				//if jsonName == "" {
+				//	jsonName = typeOfS.Field(i).Name
+				//}
+				//res.Fields = append(res.Fields, Field{
+				//	Name:      typeOfS.Field(i).Name,
+				//	Type:      typeOfS.Field(i).Type.Name(),
+				//	JsonName:  typeOfS.Field(i).Tag.Get("json"),
+				//	CloseEdit: false,
+				//})
 				continue
 			}
 

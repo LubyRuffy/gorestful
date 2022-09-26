@@ -76,12 +76,12 @@
                     <label for="{{{.Name}}}">{{{.Name}}}</label>
 
                     {{{if eq .Type "bool" }}}
-                    <select name="{{{.Name}}}" id="{{{.Name}}}" datatype="{{{.Type}}}">
+                    <select name="{{{toJS .JsonName}}}" id="{{{.Name}}}" datatype="{{{.Type}}}">
                         <option value="0">false</option>
                         <option value="1">true</option>
                     </select><br/>
                     {{{else }}}
-                    <input type="text" name="{{{.Name}}}" id="{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all" datatype="{{{.Type}}}">
+                    <input type="text" name="{{{toJS .JsonName}}}" id="{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all" datatype="{{{.Type}}}">
                     {{{end}}}
 
                     {{{end}}}
@@ -94,12 +94,22 @@
             <div id="dialog-edit-form" title="Edit {{{ .resource.Name }}}">
                 <fieldset>
                     {{{range .resource.Fields}}}
-                    <label for="{{{.Name}}}">{{{.Name}}}</label>
                     {{{if not .CloseEdit }}}
-                    <input type="text" name="{{{.Name}}}" id="edit-{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all">
-                    {{{else}}}
-                    <input type="text" name="{{{.Name}}}" id="edit-{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all" disabled>
+                    <label for="{{{.Name}}}">{{{.Name}}}</label>
+
+                    {{{if eq .Type "bool" }}}
+                    <select name="{{{toJS .JsonName}}}" id="edit-{{{.Name}}}" datatype="{{{.Type}}}">
+                        <option value="0" selected>false</option>
+                        <option value="1">true</option>
+                    </select><br/>
+                    {{{else }}}
+                    <input type="text" name="{{{toJS .JsonName}}}" id="edit-{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all" datatype="{{{.Type}}}">
                     {{{end}}}
+
+                    {{{else}}}
+                    <input type="text" name="{{{toJS .JsonName}}}" id="edit-{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all" disabled>
+                    {{{end}}}
+
                     {{{end}}}
 
                     <button onclick="editRes()">Edit</button>
@@ -126,8 +136,10 @@
                                 case "1":
                                 case "true":
                                     json[this.name] = true;
+                                    break;
                                 default:
                                     json[this.name] = false;
+                                    break;
                             }
                             break;
                         default:
@@ -153,6 +165,9 @@
                     type: 'POST',
                     contentType: "application/json",
                     data: this.convertFormToJSON("#dialog-form fieldset"),
+                    {{{ if .resource.AuthMiddle }}}
+                    headers: {"{{{ .resource.AuthMiddle.HeaderKey }}}": '{{{.resource.AuthMiddle.HeaderValuePrefix}}}' + localStorage.getItem("access_token")},
+                    {{{ end }}}
                     success: function(result) {
                         if(result.code==500) {
                             $.notify(result.message, "error");
@@ -173,6 +188,9 @@
                     type: 'POST',
                     contentType: "application/json",
                     data: this.convertFormToJSON("#dialog-edit-form fieldset"),
+                    {{{ if .resource.AuthMiddle }}}
+                    headers: {"{{{ .resource.AuthMiddle.HeaderKey }}}": '{{{.resource.AuthMiddle.HeaderValuePrefix}}}' + localStorage.getItem("access_token")},
+                    {{{ end }}}
                     success: function(result) {
                         if(result.code==500) {
                             $.notify(result.message, "error");
@@ -235,7 +253,14 @@
                             events: {
                                 'click .like': function (e, value, row, index) {
                                     {{{range .resource.Fields}}}
+
+                                    {{{if eq .Type "bool"}}}
+                                    const v{{{toJS .JsonName}}} = row.{{{toJS .JsonName}}}?'1':'0';
+                                    $('#edit-{{{.Name}}} option:eq(' +v{{{toJS .JsonName}}}+')').prop('selected', true);
+                                    {{{else}}}
                                     $( "#edit-{{{.Name}}}" ).val(row.{{{toJS .JsonName}}});
+                                    {{{end}}}
+
                                     {{{end}}}
                                     $( "#dialog-edit-form" ).dialog( "open" );
                                 },
@@ -243,6 +268,9 @@
                                     $.ajax({
                                         url: '{{{ .apiPrefix }}}/{{{ .resource.Name }}}/'+row.ID,
                                         type: 'DELETE',
+                                        {{{ if .resource.AuthMiddle }}}
+                                        headers: {"{{{ .resource.AuthMiddle.HeaderKey }}}": '{{{.resource.AuthMiddle.HeaderValuePrefix}}}' + localStorage.getItem("access_token")},
+                                        {{{ end }}}
                                         success: function(result) {
                                             $.notify(result, "success");
                                             refreshData();
