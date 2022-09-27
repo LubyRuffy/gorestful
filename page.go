@@ -9,6 +9,7 @@ import (
 
 //go:embed templates/* static/*
 var FS embed.FS
+var RegisteredResourcesPage = make(map[string]*Resource) // 注册成功的资源
 
 // AddResourcePageToGin 生成页面
 func AddResourcePageToGin(res *Resource) error {
@@ -27,6 +28,14 @@ func AddResourcePageToGin(res *Resource) error {
 			"apiPrefix": res.ApiRouterGroup.BasePath(),
 		})
 	})
+
+	base := res.PageRouterGroup.BasePath()
+	if base == "/" {
+		base = ""
+	}
+	pageUri := base + "/" + res.Name
+
+	RegisteredResourcesPage[pageUri] = res
 
 	return nil
 }

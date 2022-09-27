@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"reflect"
 )
 
 type AuthMode interface {
@@ -62,8 +63,10 @@ func (e *EmbedLogin) Init() error {
 	// 登录页面
 	e.RouterGroup.GET("/"+e.Name, func(c *gin.Context) {
 		if referer := c.Request.Referer(); referer != "" {
-			//c.Set("referer", referer)
-			c.SetCookie("referer", referer, 60, "/", "", false, true)
+			if c.Request.RequestURI != e.URL() {
+				//c.Set("referer", referer)
+				c.SetCookie("referer", referer, 60, "/", "", false, true)
+			}
 		}
 		c.HTML(http.StatusOK, "login.html", e)
 	})
@@ -76,6 +79,13 @@ func (e *EmbedLogin) Init() error {
 			var referer string
 			if v, err := c.Cookie("referer"); err == nil {
 				referer = v
+			} else {
+				if len(RegisteredResourcesPage) > 0 {
+					referer = reflect.ValueOf(RegisteredResourcesPage).MapKeys()[0].String()
+				} else {
+					referer = "/"
+				}
+
 			}
 			c.HTML(http.StatusOK, "redirect.html", gin.H{
 				"Token":   token,

@@ -1,0 +1,23 @@
+{{{define "header"}}}
+<html>
+<head>
+    <title>{{{ .resource.Name }}} list</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.2.1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/jquery-ui@1.13.2/dist/themes/base/jquery-ui.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/font-awesome@4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.21.0/dist/bootstrap-table.min.css">
+
+    <script src="https://unpkg.com/jquery"></script>
+    <script src="https://unpkg.com/jquery-ui@1.13.2/dist/jquery-ui.min.js"></script>
+    <script src="https://unpkg.com/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/bootstrap-table"></script>
+    <script src="/static/notify.min.js"></script>
+</head>
+<body>
+    <div style="text-align: right;">
+        {{{ if .resource.AuthMiddle }}}
+        <a href='/logout'>logout</a>
+        {{{ end }}}
+    </div>
+{{{end}}}
