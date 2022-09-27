@@ -8,12 +8,13 @@
 
             <table id="table"></table>
 
-            <div id="dialog-form" title="Create new {{{ .resource.Name }}}">
+            <div id="dialog-form" title="Create new {{{ .resource.Name }}}" style="min-width: 500px">
                 <p class="validateTips">All form fields are required.</p>
                 <fieldset>
                     {{{range .resource.Fields}}}
+                    <p>
                     {{{if not .CloseEdit }}}
-                    <label for="{{{.Name}}}">{{{.Name}}}</label>
+                    <label for="{{{toJS .JsonName}}}" style="min-width: 150px">{{{.Name}}}</label>
 
                     {{{if eq .Type "bool" }}}
                     <select name="{{{toJS .JsonName}}}" id="{{{.Name}}}" datatype="{{{.Type}}}">
@@ -25,17 +26,20 @@
                     {{{end}}}
 
                     {{{end}}}
+                    </p>
+
                     {{{end}}}
 
                     <button onclick="createRes()">Create</button>
                 </fieldset>
             </div>
 
-            <div id="dialog-edit-form" title="Edit {{{ .resource.Name }}}">
+            <div id="dialog-edit-form" title="Edit {{{ .resource.Name }}}" style="min-width: 500px">
                 <fieldset>
                     {{{range .resource.Fields}}}
+                    <p>
                     {{{if not .CloseEdit }}}
-                    <label for="{{{.Name}}}">{{{.Name}}}</label>
+                    <label for="{{{toJS .JsonName}}}" style="min-width: 150px">{{{.Name}}}</label>
 
                     {{{if eq .Type "bool" }}}
                     <select name="{{{toJS .JsonName}}}" id="edit-{{{.Name}}}" datatype="{{{.Type}}}">
@@ -50,6 +54,7 @@
                     <input type="text" name="{{{toJS .JsonName}}}" id="edit-{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all" disabled>
                     {{{end}}}
 
+                    </p>
                     {{{end}}}
 
                     <button onclick="editRes()">Edit</button>
@@ -64,22 +69,8 @@
                 dialog = $( "#dialog-form" ).dialog({
                     autoOpen: false,
                     modal: true,
-                    // buttons: {
-                    //     // "Create {{{ .resource.Name }}}": addUser,
-                    //     Cancel: function() {
-                    //         dialog.dialog( "close" );
-                    //     }
-                    // },
-                    close: function() {
-                        // form[ 0 ].reset();
-                        // allFields.removeClass( "ui-state-error" );
-                    }
+                    width:'auto'
                 });
-
-                // form = dialog.find( "form" ).on( "submit", function( event ) {
-                //     event.preventDefault();
-                //     addUser();
-                // });
 
                 $( "#create-user" ).button().on( "click", function() {
                     dialog.dialog( "open" );
@@ -88,6 +79,7 @@
                 dialog1 = $( "#dialog-edit-form" ).dialog({
                     autoOpen: false,
                     modal: true,
+                    width:'auto'
                 });
             } );
 
