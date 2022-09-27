@@ -229,7 +229,7 @@ func AddResourceApiToGin(res *Resource) {
 		unsetField(res, modelPost)
 
 		// 修改
-		err = res.GetDb().Model(model).Updates(modelPost).Error
+		err = res.GetDb().Model(model).Select("*").Omit(res.OmitFields()...).Updates(modelPost).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,

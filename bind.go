@@ -30,6 +30,17 @@ type Resource struct {
 	AuthMiddle      *AuthMiddle // 认证中间件
 }
 
+// OmitFields 获取不能编辑的字段
+func (res *Resource) OmitFields() []string {
+	var fs []string
+	for _, f := range res.Fields {
+		if f.CloseEdit {
+			fs = append(fs, f.Name)
+		}
+	}
+	return fs
+}
+
 // addValue 解析一个StructField为field
 func (res *Resource) addValue(val reflect.StructField, closeEdit bool) {
 	// 是否黑名单
