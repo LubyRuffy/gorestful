@@ -1,6 +1,6 @@
 <div>
     <p>{{{.Error}}}</p>
-    <form action="{{{.URL}}}" method="post">
+    <form action="/register" method="post">
         {{{range .LoginFields}}}
         <p>
             <label for="{{{.Name}}}">{{{.DisplayName}}}</label>
@@ -10,11 +10,6 @@
 
         <button type="submit">Submit</button>
     </form>
-    {{{if .OpenRegister}}}
-    <p><a href="/register">Register</a></p>
-    {{{end}}}
-</div>
 
-<script>
-    localStorage.removeItem("access_token");
-</script>
+    <p><a href="/login">Login</a></p>
+</div>

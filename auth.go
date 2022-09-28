@@ -20,12 +20,14 @@ type LoginField struct {
 
 // EmbedLogin 内嵌的登录
 type EmbedLogin struct {
-	RouterGroup *gin.RouterGroup                                              // 登录挂载的地址
-	Name        string                                                        // 登录的名称，默认是login，可以是其他的
-	LoginFields []LoginField                                                  // 登录表单列表
-	CheckValid  func(e *EmbedLogin, formMap map[string]string) (string, bool) // 是否有效的账号，返回值为token和是否有效
-	Error       string                                                        // 错误提示
-	Key         []byte                                                        // key的内容，用于jwt加密
+	RouterGroup  *gin.RouterGroup                                                              // 登录挂载的地址
+	Name         string                                                                        // 登录的名称，默认是login，可以是其他的
+	LoginFields  []LoginField                                                                  // 登录表单列表
+	CheckValid   func(c *gin.Context, e *EmbedLogin, formMap map[string]string) (string, bool) // 是否有效的账号，返回值为token和是否有效
+	Error        string                                                                        // 错误提示
+	Key          []byte                                                                        // key的内容，用于jwt加密
+	OpenRegister bool                                                                          // 是否开放注册
+	Register     func(c *gin.Context, e *EmbedLogin, formMap map[string]string) error          // 是否注册成功
 }
 
 // defaultLoginField 默认登录表单项
@@ -44,6 +46,15 @@ var (
 	}
 	defaultJwtKey = "%gorestful%for%everyone%who%need%"
 )
+
+// loginForm 获取登录表单提交的信息，转成map模式
+func (e *EmbedLogin) loginForm(c *gin.Context) map[string]string {
+	formMap := make(map[string]string)
+	for _, f := range e.LoginFields {
+		formMap[f.Name], _ = c.GetPostForm(f.Name)
+	}
+	return formMap
+}
 
 // Init 初始化
 func (e *EmbedLogin) Init() error {
@@ -71,11 +82,8 @@ func (e *EmbedLogin) Init() error {
 		c.HTML(http.StatusOK, "login.html", e)
 	})
 	e.RouterGroup.POST("/"+e.Name, func(c *gin.Context) {
-		formMap := make(map[string]string)
-		for _, f := range e.LoginFields {
-			formMap[f.Name], _ = c.GetPostForm(f.Name)
-		}
-		if token, ok := e.CheckValid(e, formMap); ok {
+		formMap := e.loginForm(c)
+		if token, ok := e.CheckValid(c, e, formMap); ok {
 			var referer string
 			if v, err := c.Cookie("referer"); err == nil {
 				referer = v
@@ -107,6 +115,28 @@ func (e *EmbedLogin) Init() error {
 	// 退出
 	e.RouterGroup.DELETE("/"+e.Name, logout)
 	e.RouterGroup.Any("/logout", logout)
+
+	// 注册用户
+	if e.OpenRegister {
+		if e.Register == nil {
+			panic("should set Register callback function when set OpenRegister")
+		}
+		e.RouterGroup.GET("/register", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "register.html", e)
+		})
+		e.RouterGroup.POST("/register", func(c *gin.Context) {
+			formMap := e.loginForm(c)
+			err := e.Register(c, e, formMap)
+			if err == nil {
+				c.Redirect(http.StatusFound, "/login")
+				return
+			}
+			e.Error = err.Error()
+			c.HTML(http.StatusOK, "register.html", e)
+			e.Error = ""
+		})
+	}
+
 	return nil
 }
 

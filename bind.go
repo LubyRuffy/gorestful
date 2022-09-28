@@ -25,9 +25,11 @@ type Resource struct {
 	BlackFields     []string         // 黑名单字段，不进行显示和编辑
 	ApiRouterGroup  *gin.RouterGroup // api绑定的地址
 	PageRouterGroup *gin.RouterGroup // page页面绑定的地址
-	GetDb           func() *gorm.DB
+	GetDb           func(c *gin.Context) *gorm.DB
 	GetModel        func() interface{}
-	AuthMiddle      *AuthMiddle // 认证中间件
+	AuthMiddle      *AuthMiddle                         // 认证中间件
+	ID              string                              // 主键id，默认为id
+	AfterInsert     func(c *gin.Context, id uint) error // 插入数据后的通知事件
 }
 
 // OmitFields 获取不能编辑的字段

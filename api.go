@@ -1,6 +1,7 @@
 package gorestful
 
 import (
+	"log"
 	"reflect"
 
 	"github.com/gin-gonic/gin"
@@ -55,6 +56,10 @@ func AddResourceApiToGin(res *Resource) {
 		return
 	}
 
+	if res.ID == "" {
+		res.ID = "id"
+	}
+
 	// 列表
 	res.ApiRouterGroup.GET("/"+res.Name, func(c *gin.Context) {
 		var page Page
@@ -71,7 +76,7 @@ func AddResourceApiToGin(res *Resource) {
 
 		// 相当于： &[]User
 		list := reflect.New(reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf(res.GetModel()).Elem()), 0, 0).Type()).Interface()
-		q := res.GetDb().Model(res.GetModel())
+		q := res.GetDb(c)
 		if len(page.Search) > 0 {
 			query := ""
 			var querySearch []interface{}
@@ -98,7 +103,7 @@ func AddResourceApiToGin(res *Resource) {
 			return
 		}
 
-		err = q.Order("id desc").Limit(page.Limit).Offset(page.Offset).Find(list).Error
+		err = q.Order(res.ID + " desc").Limit(page.Limit).Offset(page.Offset).Find(list).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
@@ -130,7 +135,7 @@ func AddResourceApiToGin(res *Resource) {
 		}
 
 		// 插入
-		err = res.GetDb().Model(res.GetModel()).Save(model).Error
+		err = res.GetDb(c).Model(res.GetModel()).Save(model).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
@@ -139,14 +144,33 @@ func AddResourceApiToGin(res *Resource) {
 			return
 		}
 
-		id := int64(0)
+		id := uint(0)
 		v := reflect.ValueOf(model).Elem()
 		typeOfS := v.Type()
 		for i := 0; i < typeOfS.NumField(); i++ {
-			if typeOfS.Field(i).Name == "ID" {
-				id = v.Field(i).Int()
+			log.Println(typeOfS.Field(i).Name)
+
+			if typeOfS.Field(i).Type.Kind() == reflect.Struct {
+				if typeOfS.Field(i).Type.String() == "gorm.Model" {
+					id = v.Field(i).FieldByName("ID").Interface().(uint)
+					break
+				}
 			}
 
+			if typeOfS.Field(i).Name == "ID" {
+				id = v.Field(i).Interface().(uint)
+				break
+			}
+		}
+
+		if res.AfterInsert != nil {
+			if err = res.AfterInsert(c, uint(id)); err != nil {
+				c.JSON(200, gin.H{
+					"code":    500,
+					"message": "add failed:" + err.Error(),
+				})
+				return
+			}
 		}
 
 		c.JSON(200, gin.H{
@@ -159,7 +183,7 @@ func AddResourceApiToGin(res *Resource) {
 	res.ApiRouterGroup.DELETE("/"+res.Name+"/:id", func(c *gin.Context) {
 		// 查找
 		model := res.GetModel()
-		err := res.GetDb().Model(model).Find(model, "id=?", c.Param("id")).Error
+		err := res.GetDb(c).Model(model).Find(model, "id=?", c.Param("id")).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
@@ -168,7 +192,7 @@ func AddResourceApiToGin(res *Resource) {
 			return
 		}
 
-		err = res.GetDb().Model(model).Delete("id=?", c.Param("id")).Error
+		err = res.GetDb(c).Model(model).Delete("id=?", c.Param("id")).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
@@ -187,7 +211,7 @@ func AddResourceApiToGin(res *Resource) {
 	res.ApiRouterGroup.GET("/"+res.Name+"/:id", func(c *gin.Context) {
 		// 查找
 		model := res.GetModel()
-		err := res.GetDb().Model(model).Find(model, "id=?", c.Param("id")).Error
+		err := res.GetDb(c).Model(model).Find(model, "id=?", c.Param("id")).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
@@ -206,7 +230,7 @@ func AddResourceApiToGin(res *Resource) {
 	res.ApiRouterGroup.POST("/"+res.Name+"/:id", func(c *gin.Context) {
 		// 解析
 		model := res.GetModel()
-		err := res.GetDb().Model(model).Find(model, "id=?", c.Param("id")).Error
+		err := res.GetDb(c).Model(model).Find(model, "id=?", c.Param("id")).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
@@ -229,7 +253,7 @@ func AddResourceApiToGin(res *Resource) {
 		unsetField(res, modelPost)
 
 		// 修改
-		err = res.GetDb().Model(model).Select("*").Omit(res.OmitFields()...).Updates(modelPost).Error
+		err = res.GetDb(c).Model(model).Select("*").Omit(res.OmitFields()...).Updates(modelPost).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
