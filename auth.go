@@ -12,6 +12,7 @@ import (
 type AuthMode interface {
 	Init() error // 初始化
 	URL() string
+	GetRouterGroup() *gin.RouterGroup
 }
 
 type LoginField struct {
@@ -25,7 +26,7 @@ type EmbedLogin struct {
 	RouterGroup  *gin.RouterGroup                                                              // 登录挂载的地址
 	Name         string                                                                        // 登录的名称，默认是login，可以是其他的
 	LoginFields  []*LoginField                                                                 // 登录表单列表
-	CheckValid   func(c *gin.Context, e *EmbedLogin, formMap map[string]string) (string, bool) // 是否有效的账号，返回值为token和是否有效 	// 错误提示
+	CheckLogin   func(c *gin.Context, e *EmbedLogin, formMap map[string]string) (string, bool) // 是否有效的账号，返回值为token和是否有效，只在登录的时候有用
 	Key          []byte                                                                        // key的内容，用于jwt加密
 	OpenRegister bool                                                                          // 是否开放注册
 	Register     func(c *gin.Context, e *EmbedLogin, formMap map[string]string) error          // 是否注册成功
@@ -95,7 +96,7 @@ func (e *EmbedLogin) Init() error {
 	})
 	e.RouterGroup.POST("/"+e.Name, func(c *gin.Context) {
 		formMap := e.loginForm(c)
-		if token, ok := e.CheckValid(c, e, formMap); ok {
+		if token, ok := e.CheckLogin(c, e, formMap); ok {
 			var referer string
 			if v, err := c.Cookie("referer"); err == nil {
 				referer = v
@@ -171,11 +172,17 @@ func (e EmbedLogin) URL() string {
 	return base + "/" + e.Name
 }
 
+// GetRouterGroup 绑定的地址
+func (e EmbedLogin) GetRouterGroup() *gin.RouterGroup {
+	return e.RouterGroup
+}
+
 type AuthMiddle struct {
-	URL               string   // 跳转的地址，可以不填，就由AuthMode.URL来获取
-	HeaderKey         string   // auth的header头对应的key，默认是Authorization，可以自行修改
-	HeaderValuePrefix string   // auth的header头对应的value前缀，比如Token
-	AuthMode          AuthMode // 是否内嵌登录
+	URL               string                      // 跳转的地址，可以不填，就由AuthMode.URL来获取
+	HeaderKey         string                      // auth的header头对应的key，默认是Authorization，可以自行修改
+	HeaderValuePrefix string                      // auth的header头对应的value前缀，比如Token
+	AuthMode          AuthMode                    // 是否内嵌登录
+	GetUser           func(c *gin.Context) string // 获取当前登录的ID
 }
 
 // addAuthToGin 增加认证
@@ -183,6 +190,21 @@ func addAuthToGin(am *AuthMiddle) {
 	if err := am.AuthMode.Init(); err != nil {
 		panic(err)
 	}
+
+	// 获取用户信息
+	am.AuthMode.GetRouterGroup().GET("/userinfo", func(c *gin.Context) {
+		if am.GetUser != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"code": 200,
+				"data": gin.H{
+					"username": am.GetUser(c),
+				},
+			})
+			return
+		}
+		c.JSON(http.StatusOK, nil)
+	})
+
 	if am.URL == "" {
 		am.URL = am.AuthMode.URL()
 	}

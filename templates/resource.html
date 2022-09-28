@@ -146,14 +146,11 @@
                 if(!fieldsValid(formSelector)) {
                     return;
                 }
-                $.ajax({
+                ajaxRequest({
                     url: '{{{ .apiPrefix }}}/{{{ .resource.Name }}}',
                     type: 'POST',
                     contentType: "application/json",
                     data: this.convertFormToJSON(formSelector),
-                    {{{ if .resource.AuthMiddle }}}
-                    headers: {"{{{ .resource.AuthMiddle.HeaderKey }}}": '{{{.resource.AuthMiddle.HeaderValuePrefix}}}' + localStorage.getItem("access_token")},
-                    {{{ end }}}
                     success: function(result) {
                         if(result.code==500) {
                             $.notify(result.message, "error");
@@ -161,33 +158,23 @@
                         }
                         refreshData();
                         $( "#dialog-form" ).dialog("close");
-                    },
-                    error: function(result){
-                        $.notify(result, "error");
                     }
                 });
             }
 
             function editRes(){
-                $.ajax({
+                ajaxRequest({
                     url: '{{{ .apiPrefix }}}/{{{ .resource.Name }}}/'+$("#edit-ID").val(),
                     type: 'POST',
                     contentType: "application/json",
                     data: this.convertFormToJSON("#dialog-edit-form fieldset"),
-                    {{{ if .resource.AuthMiddle }}}
-                    headers: {"{{{ .resource.AuthMiddle.HeaderKey }}}": '{{{.resource.AuthMiddle.HeaderValuePrefix}}}' + localStorage.getItem("access_token")},
-                    {{{ end }}}
                     success: function(result) {
                         if(result.code==500) {
                             $.notify(result.message, "error");
                             return;
                         }
-                        $.notify(result, "success");
                         refreshData();
                         $( "#dialog-edit-form" ).dialog( "close" );
-                    },
-                    error: function(result){
-                        $.notify(result, "error");
                     }
                 });
             }

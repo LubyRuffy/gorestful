@@ -48,7 +48,7 @@ func main() {
 			AuthMode: &gorestful.EmbedLogin{
 				RouterGroup: g.Group("/"), // /login
 				LoginFields: []*gorestful.LoginField{{Name: "token"}},
-				CheckValid: func(c *gin.Context, e *gorestful.EmbedLogin, formMap map[string]string) (string, bool) {
+				CheckLogin: func(c *gin.Context, e *gorestful.EmbedLogin, formMap map[string]string) (string, bool) {
 					token, ok := formMap["token"]
 					if !ok {
 						return "", false

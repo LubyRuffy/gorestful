@@ -1,7 +1,6 @@
 package gorestful
 
 import (
-	"github.com/gin-gonic/gin"
 	"html/template"
 	"io/fs"
 	"net/http"
@@ -71,16 +70,16 @@ func unsetField(res *Resource, model interface{}) {
 }
 
 // loadFS 加载内嵌的模板
-func loadFS(g *gin.Engine) {
+func loadFS(res *Resource) {
 	temp := template.Must(template.New("").Delims("{{{", "}}}").Funcs(map[string]interface{}{
 		"toJS": func(s string) template.JS {
 			return template.JS(s)
 		},
 	}).ParseFS(FS, "templates/*.html"))
-	g.SetHTMLTemplate(temp)
+	res.ginEngine.SetHTMLTemplate(temp)
 	fsys, err := fs.Sub(FS, "static")
 	if err != nil {
 		panic(err)
 	}
-	g.StaticFS("/static", http.FS(fsys))
+	res.ginEngine.StaticFS("/static", http.FS(fsys))
 }

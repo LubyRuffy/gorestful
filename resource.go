@@ -74,7 +74,7 @@ func NewResource(opts ...ResourceOption) (*Resource, error) {
 	}
 
 	// 加载模板文件
-	loadFS(res.ginEngine)
+	loadFS(res)
 
 	return res, nil
 }
@@ -131,6 +131,7 @@ func WithPageRouterGroup(r *gin.RouterGroup) ResourceOption {
 func WithAuthMiddle(am *AuthMiddle) ResourceOption {
 	return func(res *Resource) error {
 		addAuthToGin(am)
+
 		res.authMiddle = am
 		return nil
 	}

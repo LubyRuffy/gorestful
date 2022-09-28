@@ -46,7 +46,7 @@ func main() {
 			HeaderValuePrefix: "-",
 			AuthMode: &gorestful.EmbedLogin{
 				RouterGroup: g.Group("/"),
-				CheckValid: func(c *gin.Context, e *gorestful.EmbedLogin, formMap map[string]string) (string, bool) {
+				CheckLogin: func(c *gin.Context, e *gorestful.EmbedLogin, formMap map[string]string) (string, bool) {
 					if formMap["user"] == "admin" && formMap["pass"] == "123456" {
 						token := jwt.NewWithClaims(jwt.SigningMethodHS512, MyClaims{
 							Username: formMap["user"],

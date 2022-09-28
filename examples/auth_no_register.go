@@ -46,7 +46,7 @@ func main() {
 			AuthMode: &gorestful.EmbedLogin{
 				RouterGroup: g.Group("/"), // /login
 				LoginFields: []*gorestful.LoginField{{Name: "token"}},
-				CheckValid: func(c *gin.Context, e *gorestful.EmbedLogin, formMap map[string]string) (string, bool) {
+				CheckLogin: func(c *gin.Context, e *gorestful.EmbedLogin, formMap map[string]string) (string, bool) {
 					if token, ok := formMap["token"]; ok && token == "123456" {
 						return token, true // 这里可以用jwt的方式进行数据绑定
 					}

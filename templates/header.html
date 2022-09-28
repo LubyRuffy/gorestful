@@ -13,11 +13,41 @@
     <script src="https://unpkg.com/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/bootstrap-table"></script>
     <script src="/static/notify.min.js"></script>
+
+    <script>
+        function ajaxRequest(obj) {
+            $.ajax({
+                url: obj.url,
+                type: obj.type,
+                contentType: obj.contentType,
+                data: obj.data,
+            {{{ if .resource.AuthMiddle }}}
+            headers: {"{{{ .resource.AuthMiddle.HeaderKey }}}": '{{{.resource.AuthMiddle.HeaderValuePrefix}}}' + localStorage.getItem("access_token")},
+            {{{ end }}}
+            success: obj.success,
+            error: function(result){
+                $.notify(result, "error");
+            }
+        });
+        }
+
+        {{{ if .resource.AuthMiddle }}}
+        $(document).ready(function () {
+            ajaxRequest({
+                url: "/userinfo",
+                success: function (result) {
+                    $("#username").text(result.data.username);
+                }
+            })
+
+        })
+        {{{ end }}}
+    </script>
 </head>
 <body style="margin: 50px">
     <div style="text-align: right;">
         {{{ if .resource.AuthMiddle }}}
-        <a href='/logout'>logout</a>
+        <span id="username"></span> <a href='/logout'>logout</a>
         {{{ end }}}
     </div>
     <p style="color: #ab5656">{{{.error}}}</p>
