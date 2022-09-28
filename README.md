@@ -52,3 +52,25 @@
   - [x] 分页
   - [x] 错误提示
   - [x] 空值提示必填，且自动聚焦
+
+## 使用方法：
+### 最简单的使用
+- 没有用户体系，直接显示列表，参考[examples/simple.go](examples/simple.go)
+  [![list](imgs/list.png)](imgs/list.png)
+
+### 绑定到不同的url路径
+- 没有用户体系，自定义路径显示列表，参考[examples/simple_with_uri.go](examples/simple_with_uri.go)
+  [![different_uri](imgs/different_uri.png)](imgs/different_uri.png)
+### 内嵌用户认证
+这里只有认证的概念没有授权的概念，也就是说用户等级是一样的，资源并不会绑定到特定用户：
+- 正确的用户才能显示列表，参考[examples/auth_no_register.go](examples/auth_no_register.go)
+  [![auth_no_register](imgs/auth_no_register.png)](imgs/auth_no_register.png)
+- 正确的用户才能显示列表，且开放注册，参考[examples/auth_with_register.go](examples/auth_with_register.go)
+  [![auth_with_register](imgs/auth_with_register.png)](imgs/auth_with_register.png)
+  [![auth_failed](imgs/auth_failed.png)](imgs/auth_failed.png)
+  [![register](imgs/register.png)](imgs/register.png)
+  [![resource](imgs/resource.png)](imgs/resource.png)
+
+### 资源授权访问
+R是资源，U是用户，有一个关联表绑定了R<->U，这时候就要进行联合查询和权限判断，只显示当前用户的内容：
+- 有权限用户才能显示列表，参考[examples/res_with_privilige.go](examples/res_with_privilige.go)

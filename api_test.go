@@ -79,16 +79,15 @@ func TestAddResourceToGin(t *testing.T) {
 	assert.Nil(t, err)
 
 	g := gin.Default()
-	res := &Resource{
-		Name:           "user",
-		ApiRouterGroup: g.Group("/api/v1"),
-		GetDb: func(c *gin.Context) *gorm.DB {
-			return gdb.Model(&User{})
-		},
-		GetModel: func() interface{} {
+	res, err := NewResource(WithGinEngine(g),
+		WithGormDb(func(c *gin.Context) *gorm.DB {
+			return gdb
+		}),
+		WithUserStruct(func() interface{} {
 			return &User{}
-		},
-	}
+		}),
+	)
+	assert.Nil(t, err)
 	AddResourceApiToGin(res)
 
 	// 启动服务

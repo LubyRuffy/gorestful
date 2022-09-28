@@ -1,10 +1,9 @@
 package gorestful
 
 import (
+	"github.com/gin-gonic/gin"
 	"log"
 	"reflect"
-
-	"github.com/gin-gonic/gin"
 )
 
 type Page struct {
@@ -51,22 +50,8 @@ func processReflectList(res *Resource, list interface{}) []map[string]interface{
 // name 资源的名称，比如user
 // r gin的group对象，比如绑定了/api/v1
 func AddResourceApiToGin(res *Resource) {
-	// 没有绑定
-	if res.ApiRouterGroup == nil {
-		return
-	}
-
-	if res.ID == "" {
-		res.ID = "id"
-	}
-
-	if res.Fields == nil {
-		// 自动提取
-		res.autoFill()
-	}
-
 	// 列表
-	res.ApiRouterGroup.GET("/"+res.Name, func(c *gin.Context) {
+	res.apiRouterGroup.GET("/"+res.Name, func(c *gin.Context) {
 		var page Page
 		if err := c.ShouldBindQuery(&page); err != nil {
 			c.JSON(200, gin.H{
@@ -80,8 +65,8 @@ func AddResourceApiToGin(res *Resource) {
 		}
 
 		// 相当于： &[]User
-		list := reflect.New(reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf(res.GetModel()).Elem()), 0, 0).Type()).Interface()
-		q := res.GetDb(c)
+		list := reflect.New(reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf(res.getModel()).Elem()), 0, 0).Type()).Interface()
+		q := res.getDb(c).Model(res.getModel())
 		if len(page.Search) > 0 {
 			query := ""
 			var querySearch []interface{}
@@ -108,7 +93,7 @@ func AddResourceApiToGin(res *Resource) {
 			return
 		}
 
-		err = q.Order(res.ID + " desc").Limit(page.Limit).Offset(page.Offset).Find(list).Error
+		err = q.Order(res.keyId + " desc").Limit(page.Limit).Offset(page.Offset).Find(list).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
@@ -127,9 +112,9 @@ func AddResourceApiToGin(res *Resource) {
 	})
 
 	// 新增
-	res.ApiRouterGroup.POST("/"+res.Name, func(c *gin.Context) {
+	res.apiRouterGroup.POST("/"+res.Name, func(c *gin.Context) {
 		// 解析
-		model := res.GetModel()
+		model := res.getModel()
 		err := c.ShouldBindJSON(model)
 		if err != nil {
 			c.JSON(200, gin.H{
@@ -140,7 +125,7 @@ func AddResourceApiToGin(res *Resource) {
 		}
 
 		// 插入
-		err = res.GetDb(c).Model(res.GetModel()).Save(model).Error
+		err = res.getDb(c).Model(res.getModel()).Create(model).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
@@ -168,8 +153,8 @@ func AddResourceApiToGin(res *Resource) {
 			}
 		}
 
-		if res.AfterInsert != nil {
-			if err = res.AfterInsert(c, uint(id)); err != nil {
+		if res.afterInsert != nil {
+			if err = res.afterInsert(c, uint(id)); err != nil {
 				c.JSON(200, gin.H{
 					"code":    500,
 					"message": "add failed:" + err.Error(),
@@ -185,10 +170,10 @@ func AddResourceApiToGin(res *Resource) {
 	})
 
 	// 删除
-	res.ApiRouterGroup.DELETE("/"+res.Name+"/:id", func(c *gin.Context) {
+	res.apiRouterGroup.DELETE("/"+res.Name+"/:id", func(c *gin.Context) {
 		// 查找
-		model := res.GetModel()
-		err := res.GetDb(c).Model(model).Find(model, "id=?", c.Param("id")).Error
+		model := res.getModel()
+		err := res.getDb(c).Model(model).Find(model, "id=?", c.Param("id")).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
@@ -197,7 +182,7 @@ func AddResourceApiToGin(res *Resource) {
 			return
 		}
 
-		err = res.GetDb(c).Model(model).Delete("id=?", c.Param("id")).Error
+		err = res.getDb(c).Model(model).Delete("id=?", c.Param("id")).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
@@ -213,10 +198,10 @@ func AddResourceApiToGin(res *Resource) {
 	})
 
 	// 查看
-	res.ApiRouterGroup.GET("/"+res.Name+"/:id", func(c *gin.Context) {
+	res.apiRouterGroup.GET("/"+res.Name+"/:id", func(c *gin.Context) {
 		// 查找
-		model := res.GetModel()
-		err := res.GetDb(c).Model(model).Find(model, "id=?", c.Param("id")).Error
+		model := res.getModel()
+		err := res.getDb(c).Model(model).Find(model, "id=?", c.Param("id")).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
@@ -232,10 +217,10 @@ func AddResourceApiToGin(res *Resource) {
 	})
 
 	// 修改
-	res.ApiRouterGroup.POST("/"+res.Name+"/:id", func(c *gin.Context) {
+	res.apiRouterGroup.POST("/"+res.Name+"/:id", func(c *gin.Context) {
 		// 解析
-		model := res.GetModel()
-		err := res.GetDb(c).Model(model).Find(model, "id=?", c.Param("id")).Error
+		model := res.getModel()
+		err := res.getDb(c).Model(model).Find(model, "id=?", c.Param("id")).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
@@ -244,7 +229,7 @@ func AddResourceApiToGin(res *Resource) {
 			return
 		}
 
-		modelPost := res.GetModel()
+		modelPost := res.getModel()
 		err = c.ShouldBindJSON(modelPost)
 		if err != nil {
 			c.JSON(200, gin.H{
@@ -258,7 +243,7 @@ func AddResourceApiToGin(res *Resource) {
 		unsetField(res, modelPost)
 
 		// 修改
-		err = res.GetDb(c).Model(model).Select("*").Omit(res.OmitFields()...).Updates(modelPost).Error
+		err = res.getDb(c).Model(model).Select("*").Omit(res.OmitFields()...).Updates(modelPost).Error
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,

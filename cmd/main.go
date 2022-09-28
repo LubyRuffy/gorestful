@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"log"
+	"net/http"
 )
 
 func main() {
@@ -27,7 +28,6 @@ func main() {
 	err = gdb.AutoMigrate(&User{})
 
 	g := gin.Default()
-	gorestful.LoadFS(g)
 
 	var v1 *gin.RouterGroup
 	var am *gorestful.AuthMiddle
@@ -46,7 +46,7 @@ func main() {
 			HeaderValuePrefix: "-",
 			AuthMode: &gorestful.EmbedLogin{
 				RouterGroup: g.Group("/"),
-				CheckValid: func(e *gorestful.EmbedLogin, formMap map[string]string) (string, bool) {
+				CheckValid: func(c *gin.Context, e *gorestful.EmbedLogin, formMap map[string]string) (string, bool) {
 					if formMap["user"] == "admin" && formMap["pass"] == "123456" {
 						token := jwt.NewWithClaims(jwt.SigningMethodHS512, MyClaims{
 							Username: formMap["user"],
@@ -89,45 +89,25 @@ func main() {
 			})
 		})
 
-		gorestful.AddAuthToGin(am)
-
 	} else {
 		v1 = g.Group("/api/v1")
 	}
 
-	res := &gorestful.Resource{
-		Name: "user",
-		//Fields: []gorestful.Field{
-		//	{
-		//		Name:      "ID",
-		//		Type:      "uint",
-		//		CloseEdit: true,
-		//	},
-		//	{
-		//		Name: "email",
-		//		Type: "string",
-		//	},
-		//	{
-		//		Name:      "CreatedAt",
-		//		Type:      "string",
-		//		CloseEdit: true,
-		//	},
-		//},
-		BlackFields:     []string{"CreatedAt"},
-		ApiRouterGroup:  v1,
-		PageRouterGroup: g.Group("/"),
-		GetModel: func() interface{} {
-			return &User{}
-		},
-		GetDb: func() *gorm.DB {
-			return gdb
-		},
-		AuthMiddle: am,
-	}
-
-	if err = gorestful.AddResourceApiPageToGin(res); err != nil {
+	res, err := gorestful.NewResource(gorestful.WithGinEngine(g), gorestful.WithGormDb(func(c *gin.Context) *gorm.DB {
+		return gdb
+	}), gorestful.WithUserStruct(func() interface{} {
+		return &User{}
+	}), gorestful.WithApiRouterGroup(v1), gorestful.WithAuthMiddle(am))
+	if err != nil {
 		panic(err)
 	}
+
+	gorestful.AddResourceApiPageToGin(res)
+
+	// 默认页面跳转
+	g.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusFound, res.PageUrl())
+	})
 
 	g.Run(":9999")
 }

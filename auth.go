@@ -3,6 +3,8 @@ package gorestful
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"net/http"
 	"reflect"
 )
@@ -22,7 +24,7 @@ type LoginField struct {
 type EmbedLogin struct {
 	RouterGroup  *gin.RouterGroup                                                              // 登录挂载的地址
 	Name         string                                                                        // 登录的名称，默认是login，可以是其他的
-	LoginFields  []LoginField                                                                  // 登录表单列表
+	LoginFields  []*LoginField                                                                 // 登录表单列表
 	CheckValid   func(c *gin.Context, e *EmbedLogin, formMap map[string]string) (string, bool) // 是否有效的账号，返回值为token和是否有效 	// 错误提示
 	Key          []byte                                                                        // key的内容，用于jwt加密
 	OpenRegister bool                                                                          // 是否开放注册
@@ -31,7 +33,7 @@ type EmbedLogin struct {
 
 // defaultLoginField 默认登录表单项
 var (
-	defaultLoginField = []LoginField{
+	defaultLoginField = []*LoginField{
 		{
 			Name:        "user",
 			DisplayName: "User",
@@ -66,6 +68,14 @@ func (e *EmbedLogin) Init() error {
 	if e.LoginFields == nil {
 		e.LoginFields = defaultLoginField
 	}
+	for _, f := range e.LoginFields {
+		if f.Type == "" {
+			f.Type = "text"
+		}
+		if f.DisplayName == "" {
+			f.DisplayName = cases.Title(language.AmericanEnglish).String(f.Name)
+		}
+	}
 	if e.Key == nil {
 		e.Key = []byte(defaultJwtKey)
 	}
@@ -73,7 +83,7 @@ func (e *EmbedLogin) Init() error {
 	// 登录页面
 	e.RouterGroup.GET("/"+e.Name, func(c *gin.Context) {
 		if referer := c.Request.Referer(); referer != "" {
-			if c.Request.RequestURI != e.URL() {
+			if c.Request.RequestURI != e.URL() && c.Request.RequestURI != "/logout" {
 				//c.Set("referer", referer)
 				c.SetCookie("referer", referer, 60, "/", "", false, true)
 			}
@@ -102,7 +112,6 @@ func (e *EmbedLogin) Init() error {
 				"Referer": referer,
 			})
 		} else {
-
 			c.HTML(http.StatusOK, "login.html", gin.H{
 				"title": "Login",
 				"auth":  e,
@@ -169,8 +178,8 @@ type AuthMiddle struct {
 	AuthMode          AuthMode // 是否内嵌登录
 }
 
-// AddAuthToGin 增加认证
-func AddAuthToGin(am *AuthMiddle) {
+// addAuthToGin 增加认证
+func addAuthToGin(am *AuthMiddle) {
 	if err := am.AuthMode.Init(); err != nil {
 		panic(err)
 	}

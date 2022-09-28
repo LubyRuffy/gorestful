@@ -1,7 +1,7 @@
 {{{template "header" .}}}
 <div>
     <h1>Login</h1>
-    <form action="{{{.URL}}}" method="post">
+    <form action="{{{.auth.URL}}}" method="post">
         {{{range .auth.LoginFields}}}
         <p>
             <label for="{{{.Name}}}">{{{.DisplayName}}}</label>
