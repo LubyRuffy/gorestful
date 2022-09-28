@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net/http"
 	"reflect"
+	"strings"
 )
 
 type Field struct {
@@ -14,6 +15,7 @@ type Field struct {
 	JsonName  string // json的名称，可以跟数据库中的字段名称不一样
 	Type      string // 字段类型
 	CloseEdit bool   // 是否停止编辑？比如id或者创建时间之类的应该不让编辑
+	DenyNull  bool   // 是否不允许空值
 	// 格式？
 	// 合法性校验？
 }
@@ -58,11 +60,18 @@ func (res *Resource) addValue(val reflect.StructField, closeEdit bool) {
 		jsonName = val.Name
 	}
 
+	var denyNull bool
+	gormTag := val.Tag.Get("gorm")
+	if strings.Contains(gormTag, "index:") {
+		denyNull = true
+	}
+
 	res.Fields = append(res.Fields, Field{
 		Name:      val.Name,
 		Type:      val.Type.Kind().String(), // 不能用val.Type.String()
 		JsonName:  jsonName,
 		CloseEdit: closeEdit,
+		DenyNull:  denyNull,
 	})
 }
 

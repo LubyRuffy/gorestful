@@ -17,13 +17,15 @@
                     <label for="{{{toJS .JsonName}}}" style="min-width: 150px">{{{.Name}}}</label>
 
                     {{{if eq .Type "bool" }}}
-                    <select name="{{{toJS .JsonName}}}" id="{{{.Name}}}" datatype="{{{.Type}}}">
+                    <select name="{{{toJS .JsonName}}}" id="{{{.Name}}}" datatype="{{{.Type}}}" {{{ if .DenyNull }}} required {{{end}}}>
                         <option value="0">false</option>
                         <option value="1">true</option>
                     </select><br/>
                     {{{else }}}
-                    <input type="text" name="{{{toJS .JsonName}}}" id="{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all" datatype="{{{.Type}}}">
+                    <input type="text" name="{{{toJS .JsonName}}}" id="{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all" datatype="{{{.Type}}}" {{{ if .DenyNull }}} required {{{end}}}>
                     {{{end}}}
+
+                    {{{ if .DenyNull }}} * {{{end}}}
 
                     {{{end}}}
                     </p>
@@ -54,6 +56,7 @@
                     <input type="text" name="{{{toJS .JsonName}}}" id="edit-{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all" disabled>
                     {{{end}}}
 
+                    {{{ if .DenyNull }}} * {{{end}}}
                     </p>
                     {{{end}}}
 
@@ -124,12 +127,31 @@
                 $('#table').bootstrapTable('refresh');
             }
 
+            // 验证必填的字段是否有值
+            function fieldsValid(form) {
+                var valid = true;
+                $(form).find('input, select').each(function(index){
+                    var input = $(this);
+                    if(input.attr('required') && input.val() === ""){
+                        valid = false;
+                        $.notify(input.attr('id')+" can not be empty", "error");
+                        input.focus();
+                        return false;
+                    }
+                });
+                return valid;
+            }
+
             function createRes(){
+                const formSelector = "#dialog-form fieldset";
+                if(!fieldsValid(formSelector)) {
+                    return;
+                }
                 $.ajax({
                     url: '{{{ .apiPrefix }}}/{{{ .resource.Name }}}',
                     type: 'POST',
                     contentType: "application/json",
-                    data: this.convertFormToJSON("#dialog-form fieldset"),
+                    data: this.convertFormToJSON(formSelector),
                     {{{ if .resource.AuthMiddle }}}
                     headers: {"{{{ .resource.AuthMiddle.HeaderKey }}}": '{{{.resource.AuthMiddle.HeaderValuePrefix}}}' + localStorage.getItem("access_token")},
                     {{{ end }}}
