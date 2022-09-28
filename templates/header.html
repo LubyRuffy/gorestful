@@ -1,7 +1,7 @@
 {{{define "header"}}}
 <html>
 <head>
-    <title>{{{ .resource.Name }}} list</title>
+    <title>{{{ .title }}}</title>
 
     <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.2.1/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://unpkg.com/jquery-ui@1.13.2/dist/themes/base/jquery-ui.min.css">
@@ -14,10 +14,11 @@
     <script src="https://unpkg.com/bootstrap-table"></script>
     <script src="/static/notify.min.js"></script>
 </head>
-<body>
+<body style="margin-left: 50px">
     <div style="text-align: right;">
         {{{ if .resource.AuthMiddle }}}
         <a href='/logout'>logout</a>
         {{{ end }}}
     </div>
+    <p style="color: #ab5656">{{{.error}}}</p>
 {{{end}}}

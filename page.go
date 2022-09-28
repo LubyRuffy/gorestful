@@ -26,6 +26,7 @@ func AddResourcePageToGin(res *Resource) error {
 		c.HTML(http.StatusOK, "resource.html", gin.H{
 			"resource":  res,
 			"apiPrefix": res.ApiRouterGroup.BasePath(),
+			"title":     res.Name + "list",
 		})
 	})
 

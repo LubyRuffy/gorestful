@@ -23,8 +23,7 @@ type EmbedLogin struct {
 	RouterGroup  *gin.RouterGroup                                                              // 登录挂载的地址
 	Name         string                                                                        // 登录的名称，默认是login，可以是其他的
 	LoginFields  []LoginField                                                                  // 登录表单列表
-	CheckValid   func(c *gin.Context, e *EmbedLogin, formMap map[string]string) (string, bool) // 是否有效的账号，返回值为token和是否有效
-	Error        string                                                                        // 错误提示
+	CheckValid   func(c *gin.Context, e *EmbedLogin, formMap map[string]string) (string, bool) // 是否有效的账号，返回值为token和是否有效 	// 错误提示
 	Key          []byte                                                                        // key的内容，用于jwt加密
 	OpenRegister bool                                                                          // 是否开放注册
 	Register     func(c *gin.Context, e *EmbedLogin, formMap map[string]string) error          // 是否注册成功
@@ -79,7 +78,10 @@ func (e *EmbedLogin) Init() error {
 				c.SetCookie("referer", referer, 60, "/", "", false, true)
 			}
 		}
-		c.HTML(http.StatusOK, "login.html", e)
+		c.HTML(http.StatusOK, "login.html", gin.H{
+			"title": "Login",
+			"auth":  e,
+		})
 	})
 	e.RouterGroup.POST("/"+e.Name, func(c *gin.Context) {
 		formMap := e.loginForm(c)
@@ -100,16 +102,22 @@ func (e *EmbedLogin) Init() error {
 				"Referer": referer,
 			})
 		} else {
-			e.Error = "not valid"
-			c.HTML(http.StatusOK, "login.html", e)
-			e.Error = ""
+
+			c.HTML(http.StatusOK, "login.html", gin.H{
+				"title": "Login",
+				"auth":  e,
+				"error": "not valid",
+			})
 		}
 	})
 	logout := func(c *gin.Context) {
 		//c.Set("referer", "")
 		// 设置cookie  MaxAge设置为-1，表示删除cookie
 		c.SetCookie("referer", "", -1, "/", "", false, true)
-		c.HTML(http.StatusOK, "login.html", e)
+		c.HTML(http.StatusOK, "login.html", gin.H{
+			"title": "Login",
+			"auth":  e,
+		})
 		//todo:如何作废已有的jwt token？
 	}
 	// 退出
@@ -122,7 +130,10 @@ func (e *EmbedLogin) Init() error {
 			panic("should set Register callback function when set OpenRegister")
 		}
 		e.RouterGroup.GET("/register", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "register.html", e)
+			c.HTML(http.StatusOK, "register.html", gin.H{
+				"title": "Register",
+				"auth":  e,
+			})
 		})
 		e.RouterGroup.POST("/register", func(c *gin.Context) {
 			formMap := e.loginForm(c)
@@ -131,9 +142,11 @@ func (e *EmbedLogin) Init() error {
 				c.Redirect(http.StatusFound, "/login")
 				return
 			}
-			e.Error = err.Error()
-			c.HTML(http.StatusOK, "register.html", e)
-			e.Error = ""
+			c.HTML(http.StatusOK, "register.html", gin.H{
+				"title": "Register",
+				"auth":  e,
+				"error": err.Error(),
+			})
 		})
 	}
 

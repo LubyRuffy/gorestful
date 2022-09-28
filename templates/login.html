@@ -1,7 +1,8 @@
+{{{template "header" .}}}
 <div>
-    <p>{{{.Error}}}</p>
+    <h1>Login</h1>
     <form action="{{{.URL}}}" method="post">
-        {{{range .LoginFields}}}
+        {{{range .auth.LoginFields}}}
         <p>
             <label for="{{{.Name}}}">{{{.DisplayName}}}</label>
             <input type="{{{.Type}}}" name="{{{.Name}}}" value="">
@@ -10,7 +11,7 @@
 
         <button type="submit">Submit</button>
     </form>
-    {{{if .OpenRegister}}}
+    {{{if .auth.OpenRegister}}}
     <p><a href="/register">Register</a></p>
     {{{end}}}
 </div>
@@ -18,3 +19,4 @@
 <script>
     localStorage.removeItem("access_token");
 </script>
+{{{template "footer" .}}}
