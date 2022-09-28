@@ -60,6 +60,11 @@ func AddResourceApiToGin(res *Resource) {
 		res.ID = "id"
 	}
 
+	if res.Fields == nil {
+		// 自动提取
+		res.autoFill()
+	}
+
 	// 列表
 	res.ApiRouterGroup.GET("/"+res.Name, func(c *gin.Context) {
 		var page Page

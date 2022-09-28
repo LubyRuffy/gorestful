@@ -79,36 +79,39 @@ func TestAddResourceToGin(t *testing.T) {
 	assert.Nil(t, err)
 
 	g := gin.Default()
-	prefix := "/api/v1"
-	AddResourceApiToGin(&Resource{
+	res := &Resource{
 		Name:           "user",
-		ApiRouterGroup: g.Group(prefix),
-		GetDb: func() *gorm.DB {
-			return gdb
+		ApiRouterGroup: g.Group("/api/v1"),
+		GetDb: func(c *gin.Context) *gorm.DB {
+			return gdb.Model(&User{})
 		},
 		GetModel: func() interface{} {
 			return &User{}
-		}},
-	)
+		},
+	}
+	AddResourceApiToGin(res)
 
 	// 启动服务
 	s := httptest.NewServer(g)
 	defer s.Close()
 
 	// 读列表
-	r, err := getJson(s.URL + prefix + "/user")
+	r, err := getJson(s.URL + res.ApiUrl())
 	assert.Nil(t, err)
 	assert.NotNil(t, r)
 	assert.Equal(t, float64(0), r["data"].(map[string]interface{})["count"])
 
 	// 新增
-	r, err = postJson(s.URL+prefix+"/user", &User{
+	r, err = postJson(s.URL+res.ApiUrl(), &User{
 		Email: "a@a.com",
 	})
 	assert.Nil(t, err)
 	assert.NotNil(t, r)
+	cid, ok := r["data"]
+	assert.True(t, ok)
+	assert.Greater(t, cid, float64(0))
 	// 读列表
-	r, err = getJson(s.URL + prefix + "/user")
+	r, err = getJson(s.URL + res.ApiUrl())
 	assert.Nil(t, err)
 	assert.NotNil(t, r)
 	assert.Equal(t, float64(1), r["data"].(map[string]interface{})["count"])
@@ -116,28 +119,28 @@ func TestAddResourceToGin(t *testing.T) {
 	id := r["data"].(map[string]interface{})["list"].([]interface{})[0].(map[string]interface{})["ID"]
 
 	// 查看
-	r, err = getJson(s.URL + prefix + fmt.Sprintf("/user/%v", id))
+	r, err = getJson(s.URL + fmt.Sprintf("%s/%v", res.ApiUrl(), id))
 	assert.Nil(t, err)
 	assert.NotNil(t, r)
 	assert.Equal(t, "a@a.com", r["data"].(map[string]interface{})["email"])
 
 	// 修改
-	r, err = postJson(s.URL+prefix+fmt.Sprintf("/user/%v", id), &User{
+	r, err = postJson(s.URL+fmt.Sprintf("%s/%v", res.ApiUrl(), id), &User{
 		Email: "b@a.com",
 	})
 	assert.Nil(t, err)
 	assert.NotNil(t, r)
-	r, err = getJson(s.URL + prefix + fmt.Sprintf("/user/%v", id))
+	r, err = getJson(s.URL + fmt.Sprintf("%s/%v", res.ApiUrl(), id))
 	assert.Nil(t, err)
 	assert.NotNil(t, r)
 	assert.Equal(t, "b@a.com", r["data"].(map[string]interface{})["email"])
 
 	// 删除
-	r, err = deleteJson(s.URL + prefix + fmt.Sprintf("/user/%v", id))
+	r, err = deleteJson(s.URL + fmt.Sprintf("%s/%v", res.ApiUrl(), id))
 	assert.Nil(t, err)
 	assert.NotNil(t, r)
 	// 读列表
-	r, err = getJson(s.URL + prefix + "/user")
+	r, err = getJson(s.URL + res.ApiUrl())
 	assert.Nil(t, err)
 	assert.NotNil(t, r)
 	assert.Equal(t, float64(0), r["data"].(map[string]interface{})["count"])

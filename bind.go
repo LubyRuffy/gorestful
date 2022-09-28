@@ -45,6 +45,24 @@ func (res *Resource) OmitFields() []string {
 	return fs
 }
 
+// ApiUrl 请求资源的API地址
+func (res *Resource) ApiUrl() string {
+	base := res.ApiRouterGroup.BasePath()
+	if base == "/" {
+		base = ""
+	}
+	return base + "/" + res.Name
+}
+
+// PageUrl 请求资源的API地址
+func (res *Resource) PageUrl() string {
+	base := res.PageRouterGroup.BasePath()
+	if base == "/" {
+		base = ""
+	}
+	return base + "/" + res.Name
+}
+
 // addValue 解析一个StructField为field
 func (res *Resource) addValue(val reflect.StructField, closeEdit bool) {
 	// 是否黑名单
@@ -126,11 +144,6 @@ func (res *Resource) autoFill() {
 
 // AddResourceApiPageToGin 增加api和page页面到gin路由
 func AddResourceApiPageToGin(res *Resource) error {
-	if res.Fields == nil {
-		// 自动提取
-		res.autoFill()
-	}
-
 	AddResourceApiToGin(res)
 	return AddResourcePageToGin(res)
 }
