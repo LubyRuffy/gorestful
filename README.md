@@ -62,6 +62,7 @@
 ### 绑定到不同的url路径
 - 没有用户体系，自定义路径显示列表，参考[examples/simple_with_uri.go](examples/simple_with_uri.go)
   [![different_uri](imgs/different_uri.png)](imgs/different_uri.png)
+
 ### 内嵌用户认证
 这里只有认证的概念没有授权的概念，也就是说用户等级是一样的，资源并不会绑定到特定用户：
 - 正确的用户才能显示列表，参考[examples/auth_no_register.go](examples/auth_no_register.go)
@@ -71,7 +72,8 @@
   [![auth_failed](imgs/auth_failed.png)](imgs/auth_failed.png)
   [![register](imgs/register.png)](imgs/register.png)
   [![resource](imgs/resource.png)](imgs/resource.png)
+- jwt的方式，参考[examples/resource_with_privilege.go](examples/resource_with_privilege.go)
 
 ### 资源授权访问
 R是资源，U是用户，有一个关联表绑定了R<->U，这时候就要进行联合查询和权限判断，只显示当前用户的内容：
-- 有权限用户才能显示列表，参考[examples/res_with_privilige.go](examples/res_with_privilige.go)
+- 有权限用户才能显示列表，参考[examples/resource_with_privilege.go](examples/resource_with_privilege.go)

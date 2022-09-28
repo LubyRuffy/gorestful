@@ -160,7 +160,7 @@ func main() {
 				panic("not valid user")
 			}
 			if uid := v.(uint); uid > 0 {
-				return gdb.Model(&Article{}).Where("user_id=?", uid)
+				return gdb.Model(&Article{}).Where("user_id=?", uid) // 只显示当前用户的资源
 			}
 			panic("not valid user")
 		}),
