@@ -130,9 +130,12 @@ func WithPageRouterGroup(r *gin.RouterGroup) ResourceOption {
 // WithAuthMiddle 绑定页面到gin的地址
 func WithAuthMiddle(am *AuthMiddle) ResourceOption {
 	return func(res *Resource) error {
-		addAuthToGin(am)
+		if am != nil {
+			addAuthToGin(am)
 
-		res.authMiddle = am
+			res.authMiddle = am
+		}
+
 		return nil
 	}
 }
