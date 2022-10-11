@@ -187,6 +187,10 @@
                     dataField: 'data',
                     totalField: 'total',
                     responseHandler: function(res) {
+                        if (res.code == 500) {
+                            $.notify(res.message, 'error');
+                            return {}
+                        }
                         return {
                             data: res["data"]["list"],
                             total: res["data"]["count"]

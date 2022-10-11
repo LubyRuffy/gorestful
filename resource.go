@@ -26,13 +26,15 @@ type Resource struct {
 	getModel  func() interface{}            // 模型，必须设置
 	ginEngine *gin.Engine                   // gin引擎，必须设置
 
-	Fields          []Field                             // 字段，*或者空表示所有, 如果为空，根据getModel的结构自动提取
-	BlackFields     []string                            // 黑名单字段，不进行显示和编辑
-	keyId           string                              // 主键id, 如果为空，默认为id
-	afterInsert     func(c *gin.Context, id uint) error // 插入数据后的通知事件，默认为空
-	authMiddle      *AuthMiddle                         // 认证中间件，留空表示不认证
-	apiRouterGroup  *gin.RouterGroup                    // api绑定的地址
-	pageRouterGroup *gin.RouterGroup                    // page页面绑定的地址
+	Fields          []Field                                                  // 字段，*或者空表示所有, 如果为空，根据getModel的结构自动提取
+	BlackFields     []string                                                 // 黑名单字段，不进行显示和编辑
+	keyId           string                                                   // 主键id, 如果为空，默认为id
+	afterInsert     func(c *gin.Context, id uint) error                      // 插入数据后的通知事件，默认为空
+	authMiddle      *AuthMiddle                                              // 认证中间件，留空表示不认证
+	apiRouterGroup  *gin.RouterGroup                                         // api绑定的地址
+	pageRouterGroup *gin.RouterGroup                                         // page页面绑定的地址
+	queryFn         func(keyword string, q *gorm.DB, res *Resource) *gorm.DB // 查询的回调，默认取defaultQuery
+
 }
 
 type ResourceOption func(res *Resource) error
@@ -107,6 +109,14 @@ func WithName(name string) ResourceOption {
 func WithGormDb(getDb func(c *gin.Context) *gorm.DB) ResourceOption {
 	return func(res *Resource) error {
 		res.getDb = getDb
+		return nil
+	}
+}
+
+// WithQueryFunc 绑定关键字查询的回调
+func WithQueryFunc(queryFn func(keyword string, q *gorm.DB, res *Resource) *gorm.DB) ResourceOption {
+	return func(res *Resource) error {
+		res.queryFn = queryFn
 		return nil
 	}
 }
@@ -266,5 +276,18 @@ func (res *Resource) autoFill() {
 		} else {
 			res.addValue(typeOfS.Field(i), false)
 		}
+	}
+}
+
+// EachStringField 遍历可以编辑的string类型的字段
+func (res *Resource) EachStringField(callback func(Field)) {
+	for _, f := range res.Fields {
+		if f.CloseEdit {
+			continue
+		}
+		if f.Type != "string" {
+			continue
+		}
+		callback(f)
 	}
 }

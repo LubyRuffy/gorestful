@@ -2,6 +2,7 @@ package gorestful
 
 import (
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"log"
 	"reflect"
 )
@@ -46,6 +47,25 @@ func processReflectList(res *Resource, list interface{}) []map[string]interface{
 	return list1
 }
 
+// defaultQuery 默认查询所有字段
+func defaultQuery(keyword string, q *gorm.DB, res *Resource) *gorm.DB {
+	query := ""
+	var querySearch []interface{}
+
+	res.EachStringField(func(f Field) {
+		if len(query) > 0 {
+			query += " or "
+		}
+		query += f.JsonName + " like ? "
+		querySearch = append(querySearch, "%"+keyword+"%")
+	})
+
+	if len(querySearch) == 0 {
+		return q
+	}
+	return q.Where(query, querySearch...)
+}
+
 // AddResourceApiToGin 插入到gin的路由中去，形成api
 // name 资源的名称，比如user
 // r gin的group对象，比如绑定了/api/v1
@@ -68,19 +88,11 @@ func AddResourceApiToGin(res *Resource) {
 		list := reflect.New(reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf(res.getModel()).Elem()), 0, 0).Type()).Interface()
 		q := res.getDb(c).Model(res.getModel())
 		if len(page.Search) > 0 {
-			query := ""
-			var querySearch []interface{}
-			for _, f := range res.Fields {
-				if f.CloseEdit {
-					continue
-				}
-				if len(query) > 0 {
-					query += " or "
-				}
-				query += f.Name + " like ? "
-				querySearch = append(querySearch, "%"+page.Search+"%")
+			if res.queryFn != nil {
+				q = res.queryFn(page.Search, q, res)
+			} else {
+				q = defaultQuery(page.Search, q, res)
 			}
-			q = q.Where(query, querySearch...)
 		}
 
 		var count int64
