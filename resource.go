@@ -26,14 +26,15 @@ type Resource struct {
 	getModel  func() interface{}            // 模型，必须设置
 	ginEngine *gin.Engine                   // gin引擎，必须设置
 
-	Fields          []Field                                                  // 字段，*或者空表示所有, 如果为空，根据getModel的结构自动提取
-	BlackFields     []string                                                 // 黑名单字段，不进行显示和编辑
-	keyId           string                                                   // 主键id, 如果为空，默认为id
-	afterInsert     func(c *gin.Context, id uint) error                      // 插入数据后的通知事件，默认为空
-	authMiddle      *AuthMiddle                                              // 认证中间件，留空表示不认证
-	apiRouterGroup  *gin.RouterGroup                                         // api绑定的地址
-	pageRouterGroup *gin.RouterGroup                                         // page页面绑定的地址
-	queryFn         func(keyword string, q *gorm.DB, res *Resource) *gorm.DB // 查询的回调，默认取defaultQuery
+	Fields          []Field                                                   // 字段，*或者空表示所有, 如果为空，根据getModel的结构自动提取
+	BlackFields     []string                                                  // 黑名单字段，不进行显示和编辑
+	keyId           string                                                    // 主键id, 如果为空，默认为id
+	afterInsert     func(c *gin.Context, id uint) error                       // 插入数据后的通知事件，默认为空
+	authMiddle      *AuthMiddle                                               // 认证中间件，留空表示不认证
+	apiRouterGroup  *gin.RouterGroup                                          // api绑定的地址
+	pageRouterGroup *gin.RouterGroup                                          // page页面绑定的地址
+	queryFn         func(keyword string, q *gorm.DB, res *Resource) *gorm.DB  // 查询的回调，默认取defaultQuery
+	deleteFn        func(id interface{}, res *Resource, c *gin.Context) error // 删除的操作替换，默认取defaultDelete
 
 }
 
@@ -117,6 +118,14 @@ func WithGormDb(getDb func(c *gin.Context) *gorm.DB) ResourceOption {
 func WithQueryFunc(queryFn func(keyword string, q *gorm.DB, res *Resource) *gorm.DB) ResourceOption {
 	return func(res *Resource) error {
 		res.queryFn = queryFn
+		return nil
+	}
+}
+
+// WithDeleteFunc 绑定删除的函数替换，在join场景下需要用到
+func WithDeleteFunc(deleteFn func(id interface{}, res *Resource, c *gin.Context) error) ResourceOption {
+	return func(res *Resource) error {
+		res.deleteFn = deleteFn
 		return nil
 	}
 }

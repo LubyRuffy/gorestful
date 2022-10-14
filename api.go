@@ -1,6 +1,7 @@
 package gorestful
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"log"
@@ -183,22 +184,27 @@ func AddResourceApiToGin(res *Resource) {
 
 	// 删除
 	res.apiRouterGroup.DELETE("/"+res.Name+"/:id", func(c *gin.Context) {
-		// 查找
-		model := res.getModel()
-		err := res.getDb(c).Model(model).Find(model, "id=?", c.Param("id")).Error
-		if err != nil {
-			c.JSON(200, gin.H{
-				"code":    500,
-				"message": "not found:" + err.Error(),
-			})
-			return
+		defaultDelete := func(id interface{}, res *Resource, c *gin.Context) error {
+			model := res.getModel()
+			err := res.getDb(c).Model(model).Where("?=?", res.keyId, c.Param("id")).Delete(model).Error
+			if err != nil {
+				return fmt.Errorf("delete failed: %v", err)
+			}
+
+			return nil
 		}
 
-		err = res.getDb(c).Model(model).Delete("id=?", c.Param("id")).Error
+		var err error
+		if res.deleteFn != nil {
+			err = res.deleteFn(c.Param("id"), res, c)
+		} else {
+			err = defaultDelete(c.Param("id"), res, c)
+		}
+
 		if err != nil {
 			c.JSON(200, gin.H{
 				"code":    500,
-				"message": "delete failed:" + err.Error(),
+				"message": err,
 			})
 			return
 		}
