@@ -16,6 +16,7 @@ type Field struct {
 	DenyNull  bool   // 是否不允许空值
 	// 格式？
 	// 合法性校验？
+	EnumValues [][]interface{} // 在Type为enum的情况下有效, 第一个字段为int，第二个字段为string用于显示
 }
 
 // Resource 资源对象
@@ -286,6 +287,19 @@ func (res *Resource) autoFill() {
 			res.addValue(typeOfS.Field(i), false)
 		}
 	}
+}
+
+// SetEnumField 设置字段为Enum类型
+func (res *Resource) SetEnumField(name string, values [][]interface{}) bool {
+	// 替换字段
+	for i := range res.Fields {
+		if res.Fields[i].Name == name {
+			res.Fields[i].Type = "enum"
+			res.Fields[i].EnumValues = values
+			return true
+		}
+	}
+	return false
 }
 
 // EachStringField 遍历可以编辑的string类型的字段

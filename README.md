@@ -38,6 +38,7 @@
     - [x] 支持插入数据事件通知
   - [x] 支持自定义query回调，主要用与在joins场景下的多表条件（WithQueryFunc）
   - [x] 支持自定义的删除操作替换，主要用与在joins场景下的多表条件（WithDeleteFunc）
+  - [x] 支持enum类型的显示替换：SetEnumField(field, [][]interface{})
 - [ ] 支持前端页面生成
   - [x] 列表
     - [x] 支持搜索

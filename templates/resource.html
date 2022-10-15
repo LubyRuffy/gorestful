@@ -20,6 +20,12 @@
                         <option value="0">false</option>
                         <option value="1">true</option>
                     </select><br/>
+                    {{{else if eq .Type "enum" }}}
+                        <select name="{{{toJS .JsonName}}}" id="{{{.Name}}}" datatype="{{{.Type}}}">
+                            {{{range .EnumValues}}}
+                            <option value="{{{index . 0}}}">{{{index . 1}}}</option>
+                            {{{end}}}
+                        </select><br/>
                     {{{else }}}
                     <input type="text" name="{{{toJS .JsonName}}}" id="{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all" datatype="{{{.Type}}}" {{{ if .DenyNull }}} required {{{end}}}>
                     {{{end}}}
@@ -47,6 +53,12 @@
                         <option value="0" selected>false</option>
                         <option value="1">true</option>
                     </select><br/>
+                    {{{else if eq .Type "enum" }}}
+                        <select name="{{{toJS .JsonName}}}" id="edit-{{{.Name}}}" datatype="{{{.Type}}}">
+                            {{{range .EnumValues}}}
+                            <option value="{{{index . 0}}}">{{{index . 1}}}</option>
+                            {{{end}}}
+                        </select><br/>
                     {{{else }}}
                     <input type="text" name="{{{toJS .JsonName}}}" id="edit-{{{.Name}}}" value="" class="text ui-widget-content ui-corner-all" datatype="{{{.Type}}}">
                     {{{end}}}
@@ -108,6 +120,9 @@
                                     json[this.name] = false;
                                     break;
                             }
+                            break;
+                        case "enum":
+                            json[this.name] = parseInt(this.value);
                             break;
                         default:
                             json[this.name] = this.value || "";
@@ -212,7 +227,18 @@
                         {{{range .resource.Fields}}}
                         {
                             field: '{{{.JsonName}}}',
-                            title: '{{{.Name}}}'
+                            title: '{{{.Name}}}',
+                            {{{if .EnumValues}}}
+                            data: {
+                                {{{range .EnumValues}}}
+                                {{{index . 0}}}: {{{index . 1}}},
+                                {{{end}}}
+                            },
+                            formatter: function(value, row) {
+                                return this.data[value];
+                            },
+                            {{{end}}}
+                            a: 1 // 占位符
                         },
                         {{{end}}}
                         {
