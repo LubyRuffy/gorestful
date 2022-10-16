@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"reflect"
+	"strconv"
 )
 
 type Page struct {
@@ -186,7 +187,10 @@ func AddResourceApiToGin(res *Resource) {
 	res.apiRouterGroup.DELETE("/"+res.Name+"/:id", func(c *gin.Context) {
 		defaultDelete := func(id interface{}, res *Resource, c *gin.Context) error {
 			model := res.getModel()
-			err := res.getDb(c).Model(model).Where("?=?", res.keyId, c.Param("id")).Delete(model).Error
+			if v, err := strconv.Atoi(id.(string)); err == nil {
+				id = v
+			}
+			err := res.getDb(c).Delete(model, "?=?", res.keyId, id).Error
 			if err != nil {
 				return fmt.Errorf("delete failed: %v", err)
 			}

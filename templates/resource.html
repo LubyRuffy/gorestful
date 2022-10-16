@@ -275,8 +275,12 @@
                                         headers: {"{{{ .resource.AuthMiddle.HeaderKey }}}": '{{{.resource.AuthMiddle.HeaderValuePrefix}}}' + localStorage.getItem("access_token")},
                                         {{{ end }}}
                                         success: function(result) {
-                                            $.notify(result, "success");
+                                            if(result.code==500) {
+                                                $.notify(result.message, "error");
+                                                return;
+                                            }
                                             refreshData();
+                                            $.notify("delete ok", "success");
                                         },
                                         error: function(result){
                                             $.notify(result, "error");
