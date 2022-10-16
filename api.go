@@ -190,7 +190,7 @@ func AddResourceApiToGin(res *Resource) {
 			if v, err := strconv.Atoi(id.(string)); err == nil {
 				id = v
 			}
-			err := res.getDb(c).Delete(model, "?=?", res.keyId, id).Error
+			err := res.getDb(c).Model(model).Unscoped().Delete("?=?", res.keyId, id).Error
 			if err != nil {
 				return fmt.Errorf("delete failed: %v", err)
 			}
